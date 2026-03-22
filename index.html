@@ -301,13 +301,97 @@ tr.todo-done .action-btn{text-decoration:none;}
 #fb-config-save:hover{background:#a83d28;}
 #fb-config-msg{font-size:.72rem;color:var(--paid-accent);display:none;}
 @media(max-width:400px){.app{padding:16px 10px 80px;}}
+
+/* ── MOBILE OVERHAUL ─────────────────────────────────────────────────────── */
 @media(max-width:700px){
-  .stats{grid-template-columns:1fr 1fr;}
-  .form-grid,.form-grid-todo{grid-template-columns:1fr 1fr;}
+  /* Layout */
+  .app{padding:12px 10px 90px;}
+  .header{margin-bottom:16px;}
+  .header h1{font-size:1.5rem;}
+  .header p{font-size:.72rem;}
+  .header::before{margin-bottom:10px;}
+
+  /* Stats: 2x2 grid, smaller */
+  .stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .stat{padding:10px 12px;}
+  .stat-label{font-size:.62rem;}
+  .stat-value{font-size:1.1rem;}
+
+  /* Hide desktop tab bar — replaced by bottom nav */
+  .tabs{display:none;}
+
+  /* Bottom navigation bar */
+  #bottom-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--ink);
+    z-index:200;
+    border-top:2px solid rgba(255,255,255,.1);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .bnav-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:8px 2px 6px;
+    background:none;border:none;color:rgba(255,255,255,.5);
+    font-family:var(--mono);font-size:.52rem;letter-spacing:.03em;text-transform:uppercase;
+    cursor:pointer;gap:3px;transition:color .15s;position:relative;
+  }
+  .bnav-btn .bnav-icon{font-size:1.2rem;line-height:1;}
+  .bnav-btn.active{color:white;}
+  .bnav-btn.active::after{
+    content:'';position:absolute;top:0;left:20%;right:20%;height:2px;
+    background:var(--accent);border-radius:0 0 2px 2px;
+  }
+  .bnav-btn .bnav-badge{
+    position:absolute;top:4px;right:calc(50% - 18px);
+    background:var(--accent);color:white;font-size:.52rem;
+    min-width:14px;height:14px;border-radius:7px;
+    display:flex;align-items:center;justify-content:center;padding:0 3px;
+    font-family:var(--mono);
+  }
+  .bnav-btn.active .bnav-badge{background:var(--paid-accent);}
+
+  /* Forms: single column */
+  .form-grid{grid-template-columns:1fr 1fr;}
+  .form-grid-todo{grid-template-columns:1fr 1fr;}
+  .form-grid-2{grid-template-columns:1fr;}
   .cat-panel-inner{grid-template-columns:1fr;}
-  .header h1{font-size:2rem;}
-  thead th,tbody td{padding:7px 8px;}
+  .form-field input,.form-field select,.form-field textarea{font-size:16px;} /* prevent iOS zoom */
+
+  /* Tables: horizontal scroll, hide less important columns */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:4px;}
+  table{min-width:420px;}
+  thead th,tbody td{padding:8px 8px;font-size:.72rem;}
+  /* Hide notes column on mobile */
+  th:nth-child(6),td:nth-child(6){display:none;}
+  /* Shrink action cell */
+  .action-cell{gap:4px;}
+  .action-btn{font-size:.62rem;padding:5px 6px;}
+
+  /* Auth bar compact */
+  #auth-bar{padding:8px 12px;gap:8px;}
+  #auth-user-info{font-size:.72rem;}
+  #sync-indicator{font-size:.65rem;}
+
+  /* Toast bottom offset for nav bar */
+  .toast{bottom:80px;right:10px;left:10px;max-width:none;font-size:.75rem;padding:12px 16px;}
+
+  /* Summary grid */
+  .sum-grid{grid-template-columns:1fr 1fr;}
+
+  /* Add buttons full width */
+  .btn-add,.btn-todo-add{width:100%;text-align:center;justify-content:center;display:flex;}
+
+  /* PWA install bar */
+  #pwa-install-bar{flex-direction:column;gap:8px;padding:12px;}
+  #pwa-install-bar .pwa-msg{font-size:.75rem;}
 }
+
+/* Desktop: hide bottom nav */
+@media(min-width:701px){
+  #bottom-nav{display:none;}
+}
+
 </style>
 </head>
 <body>
@@ -489,9 +573,34 @@ tr.todo-done .action-btn{text-decoration:none;}
   <div id="sum-content"></div>
 </div>
 
+</div><!-- end .app -->
 
+<!-- Bottom navigation (mobile only) -->
+<nav id="bottom-nav">
+  <button class="bnav-btn active" onclick="switchTab('pay')" id="bnav-pay">
+    <span class="bnav-icon">📋</span>
+    <span>Πληρωμή</span>
+    <span class="bnav-badge" id="bnav-badge-pay"></span>
+  </button>
+  <button class="bnav-btn" onclick="switchTab('paid')" id="bnav-paid">
+    <span class="bnav-icon">✅</span>
+    <span>Πληρωμένα</span>
+  </button>
+  <button class="bnav-btn" onclick="switchTab('todo')" id="bnav-todo">
+    <span class="bnav-icon">☑</span>
+    <span>Εργασίες</span>
+    <span class="bnav-badge" id="bnav-badge-todo"></span>
+  </button>
+  <button class="bnav-btn" onclick="switchTab('shop')" id="bnav-shop">
+    <span class="bnav-icon">🛍</span>
+    <span>Ψώνια</span>
+  </button>
+  <button class="bnav-btn" onclick="switchTab('sum')" id="bnav-sum">
+    <span class="bnav-icon">📊</span>
+    <span>Σύνολο</span>
+  </button>
+</nav>
 
-</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -642,6 +751,7 @@ function render(){
   document.getElementById('badge-todo').textContent=todos.length;
   document.getElementById('badge-shop').textContent=shops.length;
   document.getElementById('badge-sum').textContent=todos.filter(t=>!t.done).length;
+  if(typeof updateBnavBadges==='function') updateBnavBadges();
 
   // Payment dropdown
   const sel=document.getElementById('f-cat'),cur=sel.value;
@@ -1183,6 +1293,17 @@ function switchTab(which){
   const tabs=['pay','paid','cat','todo','shop','sum'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===which));
   tabs.forEach(id=>document.getElementById(`panel-${id}`).classList.toggle('active',id===which));
+  // Sync bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('bnav-'+which);
+  if(nb) nb.classList.add('active');
+}
+
+function updateBnavBadges(){
+  const bp=document.getElementById('bnav-badge-pay');
+  const bt=document.getElementById('bnav-badge-todo');
+  if(bp){ const n=pending.length; bp.textContent=n||''; bp.style.display=n?'flex':'none'; }
+  if(bt){ const n=todos.filter(t=>!t.done).length; bt.textContent=n||''; bt.style.display=n?'flex':'none'; }
 }
 let toastTimer;
 function toast(msg,type){
