@@ -235,6 +235,8 @@ tr.todo-done .action-btn{text-decoration:none;}
 .due-chip.ok{color:#2d6a4f;}
 td.paid-date{color:var(--paid-accent);font-size:.78rem;}
 
+.tab.done-tab.active{border-bottom-color:#374151;}
+.tab.done-tab.active .badge{background:#374151;}
 .tab.shop-tab.active{border-bottom-color:#8b4513;}
 .tab.shop-tab.active .badge{background:#8b4513;}
 .tab.sum-tab.active{border-bottom-color:#374151;}
@@ -268,11 +270,6 @@ td.paid-date{color:var(--paid-accent);font-size:.78rem;}
 
 
 
-.done-section-header{margin-top:28px;margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
-.done-section-header .dsh-line{flex:1;height:1px;background:var(--border);}
-.done-section-header .dsh-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#9a9080;white-space:nowrap;padding:0 4px;}
-.done-section-header .dsh-arrow{font-size:.7rem;color:#9a9080;transition:transform .2s;}
-.done-section-header.open .dsh-arrow{transform:rotate(180deg);}
 tr.todo-done td{opacity:.5;text-decoration:line-through;}
 tr.todo-done .action-btn{text-decoration:none;}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
@@ -442,8 +439,8 @@ tr.todo-done .action-btn{text-decoration:none;}
 <div class="tabs">
   <button class="tab active"   onclick="switchTab('pay')">  📋 Προς Πληρωμή  <span class="badge" id="badge-pay">0</span></button>
   <button class="tab paid-tab" onclick="switchTab('paid')"> ✅ Πληρωμένα     <span class="badge" id="badge-paid">0</span></button>
-  <button class="tab cat-tab"  onclick="switchTab('cat')">  🏷 Κατηγορίες    <span class="badge" id="badge-cat">0</span></button>
   <button class="tab todo-tab"  onclick="switchTab('todo')">  ☑ Εργασίες      <span class="badge" id="badge-todo">0</span></button>
+  <button class="tab done-tab"  onclick="switchTab('done')">  ✔ Ολοκληρωμένες <span class="badge" id="badge-done">0</span></button>
   <button class="tab shop-tab"  onclick="switchTab('shop')">  🛍 Ψώνια        <span class="badge" id="badge-shop">0</span></button>
   <button class="tab sum-tab"   onclick="switchTab('sum')">   📊 Σύνολο        <span class="badge" id="badge-sum">0</span></button>
 
@@ -458,7 +455,7 @@ tr.todo-done .action-btn{text-decoration:none;}
       <div class="form-field"><label>Περιγραφή *</label><input type="text" id="f-desc" placeholder="π.χ. Λογαριασμός ΔΕΗ"></div>
       <div class="form-field"><label>Ποσό (€) *</label><input type="number" id="f-amount" placeholder="0,00" step="0.01" min="0"></div>
       <div class="form-field"><label>Ημερομηνία</label><input type="date" id="f-due"></div>
-      <div class="form-field"><label>Κατηγορία</label><select id="f-cat"></select></div>
+      <div class="form-field"><label>Κατηγορία</label><input type="text" id="f-cat" placeholder="π.χ. Κοινόχρηστα" list="pay-cat-list"><datalist id="pay-cat-list"></datalist></div>
     </div>
     <div class="form-grid-2">
       <div class="form-field"><label>Σημειώσεις</label><input type="text" id="f-notes" placeholder="Προαιρετικές σημειώσεις..."></div>
@@ -483,33 +480,6 @@ tr.todo-done .action-btn{text-decoration:none;}
       <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Σημειώσεις</th><th>Πληρώθηκε</th><th style="text-align:center">Ενέργεια</th></tr></thead>
       <tbody id="tbody-paid"></tbody>
     </table>
-  </div>
-</div>
-
-<!-- ΚΑΤΗΓΟΡΙΕΣ -->
-<div class="panel" id="panel-cat">
-  <div class="cat-info">
-    ✏️ <strong>Κλικ σε κατηγορία για μετονομασία.</strong> &nbsp;·&nbsp;
-    ✕ Διαγραφή (μόνο αν δεν χρησιμοποιείται). &nbsp;·&nbsp;
-    Οι αλλαγές ενημερώνουν αυτόματα το μενού επιλογής.
-  </div>
-  <div class="cat-panel-inner">
-    <div class="cat-section">
-      <div class="cat-section-head pay-head"><span class="dot"></span>Κατηγορίες Προς Πληρωμή</div>
-      <div class="cat-list" id="cat-list-pay"></div>
-      <div class="cat-add-row">
-        <input class="cat-add-input" type="text" id="cat-input-pay" placeholder="Νέα κατηγορία..." onkeydown="if(event.key==='Enter')addCategory('pay')">
-        <button class="cat-add-btn" onclick="addCategory('pay')">+ Προσθήκη</button>
-      </div>
-    </div>
-    <div class="cat-section">
-      <div class="cat-section-head paid-head"><span class="dot"></span>Κατηγορίες Πληρωμένων</div>
-      <div class="cat-list" id="cat-list-paid"></div>
-      <div class="cat-add-row">
-        <input class="cat-add-input" type="text" id="cat-input-paid" placeholder="Νέα κατηγορία..." onkeydown="if(event.key==='Enter')addCategory('paid')">
-        <button class="cat-add-btn" onclick="addCategory('paid')">+ Προσθήκη</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -538,7 +508,16 @@ tr.todo-done .action-btn{text-decoration:none;}
       <tbody id="tbody-todo"></tbody>
     </table>
   </div>
-  <div id="done-section"></div>
+</div>
+
+<!-- ΟΛΟΚΛΗΡΩΜΕΝΕΣ -->
+<div class="panel" id="panel-done">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Πληροφορίες</th><th>Ολοκληρώθηκε</th><th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th></tr></thead>
+      <tbody id="tbody-done"></tbody>
+    </table>
+  </div>
 </div>
 
 <!-- ΨΩΝΙΑ -->
@@ -590,6 +569,11 @@ tr.todo-done .action-btn{text-decoration:none;}
     <span class="bnav-icon">☑</span>
     <span>Εργασίες</span>
     <span class="bnav-badge" id="bnav-badge-todo"></span>
+  </button>
+  <button class="bnav-btn" onclick="switchTab('done')" id="bnav-done">
+    <span class="bnav-icon">✔</span>
+    <span>Ολοκλ.</span>
+    <span class="bnav-badge" id="bnav-badge-done"></span>
   </button>
   <button class="bnav-btn" onclick="switchTab('shop')" id="bnav-shop">
     <span class="bnav-icon">🛍</span>
@@ -727,14 +711,25 @@ function saveState(){
 
 function fmt(n){return new Intl.NumberFormat('el-GR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function daysLabel(d){
+  if(!d) return '';
+  const due=new Date(d), now=new Date(); now.setHours(0,0,0,0);
+  const diff=Math.ceil((due-now)/86400000);
+  if(diff===0) return '<span style="color:var(--accent);font-weight:600;font-size:.7rem;margin-left:4px">σήμερα</span>';
+  if(diff===1) return '<span style="color:#b85c00;font-size:.7rem;margin-left:4px">αύριο</span>';
+  if(diff<0)   return `<span style="color:var(--accent);font-weight:600;font-size:.7rem;margin-left:4px">${Math.abs(diff)}μ πριν</span>`;
+  return `<span style="color:#6b7280;font-size:.7rem;margin-left:4px">${diff}μ</span>`;
+}
+
 function duePill(d){
   if(!d)return'<span class="due-chip">—</span>';
   const due=new Date(d),now=new Date();now.setHours(0,0,0,0);
   const diff=Math.ceil((due-now)/86400000);
   const lbl=due.toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  if(diff<0)return`<span class="due-chip overdue">⚠ ${lbl}</span>`;
-  if(diff<=5)return`<span class="due-chip soon">⏰ ${lbl}</span>`;
-  return`<span class="due-chip ok">${lbl}</span>`;
+  const days=daysLabel(d);
+  if(diff<0)return`<span class="due-chip overdue">⚠ ${lbl}${days}</span>`;
+  if(diff<=5)return`<span class="due-chip soon">⏰ ${lbl}${days}</span>`;
+  return`<span class="due-chip ok">${lbl}${days}</span>`;
 }
 
 function render(){
@@ -747,27 +742,38 @@ function render(){
   document.getElementById('count-todo').textContent=openTodos.length+(openTodos.length===1?' εκκρεμής':' εκκρεμείς');
   document.getElementById('badge-pay').textContent=pending.length;
   document.getElementById('badge-paid').textContent=paid.length;
-  document.getElementById('badge-cat').textContent=catsPay.length;
-  document.getElementById('badge-todo').textContent=todos.length;
+  document.getElementById('badge-todo').textContent=todos.filter(t=>!t.done).length;
+  document.getElementById('badge-done').textContent=todos.filter(t=>t.done).length;
   document.getElementById('badge-shop').textContent=shops.length;
   document.getElementById('badge-sum').textContent=todos.filter(t=>!t.done).length;
   if(typeof updateBnavBadges==='function') updateBnavBadges();
 
-  // Payment dropdown
-  const sel=document.getElementById('f-cat'),cur=sel.value;
-  sel.innerHTML=catsPay.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  if(catsPay.includes(cur))sel.value=cur;
+  // Payment category datalist (auto-suggest from existing categories)
+  const usedPayCats=[...new Set(pending.map(p=>p.cat).concat(paid.map(p=>p.cat)).filter(Boolean))];
+  const payDl=document.getElementById('pay-cat-list');
+  if(payDl) payDl.innerHTML=usedPayCats.map(c=>`<option value="${esc(c)}">`).join('');
 
   // Todo category datalist
   const usedTodoCats=[...new Set(todos.map(t=>t.cat).filter(Boolean))];
   document.getElementById('todo-cat-list').innerHTML=usedTodoCats.map(c=>`<option value="${esc(c)}">`).join('');
+
+  // Sort helper: no date first, then ascending by date
+  function sortByDate(arr,dateKey){
+    return [...arr].sort((a,b)=>{
+      const ad=a[dateKey],bd=b[dateKey];
+      if(!ad&&!bd)return 0;
+      if(!ad)return -1;
+      if(!bd)return 1;
+      return ad.localeCompare(bd);
+    });
+  }
 
   // To Pay
   const tb1=document.getElementById('tbody-pay');
   if(!pending.length){
     tb1.innerHTML=`<tr><td colspan="7"><div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμείς πληρωμές!</p></div></td></tr>`;
   }else{
-    tb1.innerHTML=pending.map((item,i)=>`
+    tb1.innerHTML=sortByDate(pending,'due').map((item,i)=>`
       <tr>
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(item.desc)}</strong></td>
@@ -832,16 +838,12 @@ function render(){
   if(!shops.length){
     tbs.innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">🛍</span><p>Δεν υπάρχουν καταγεγραμμένα ψώνια.<br>Προσθέστε πράγματα που πληρώσατε και περιμένετε επιστροφή.</p></div></td></tr>`;
   }else{
-    const sortedShops=[...shops].sort((a,b)=>{
-      if(!a.date&&!b.date)return 0; if(!a.date)return -1; if(!b.date)return 1;
-      return a.date.localeCompare(b.date);
-    });
-    tbs.innerHTML=sortedShops.map((s,i)=>`
+    tbs.innerHTML=sortByDate(shops,'date').map((s,i)=>`
       <tr>
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(s.desc)}</strong></td>
         <td class="amount" style="color:#8b4513">€ ${fmt(s.amount)}</td>
-        <td>${s.date?new Date(s.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
+        <td>${s.date?new Date(s.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'})+daysLabel(s.date):'—'}</td>
         <td class="category"><span>${esc(s.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(s.notes||'—')}</td>
         <td><div class="action-cell">
@@ -1018,12 +1020,7 @@ function render(){
   }
 
   // Sort: no-date first, then by date ascending
-  filtered=[...filtered].sort((a,b)=>{
-    if(!a.date&&!b.date)return 0;
-    if(!a.date)return -1;
-    if(!b.date)return 1;
-    return a.date.localeCompare(b.date);
-  });
+  filtered=sortByDate(filtered,'date');
 
   const tbt=document.getElementById('tbody-todo');
   if(!filtered.length){
@@ -1038,7 +1035,7 @@ function render(){
       return`<tr>
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(t.name)}</strong></td>
-        <td style="${overdue?'color:var(--accent);font-weight:500':''}">${overdue?'⚠ ':''}${dateLbl}</td>
+        <td style="${overdue?'color:var(--accent);font-weight:500':''}">${overdue?'⚠ ':''}${dateLbl}${t.date?daysLabel(t.date):''}</td>
         <td class="category"><span>${esc(t.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem;white-space:pre-wrap;max-width:200px">${esc(t.info||'—')}</td>
         <td><button class="action-btn done-btn" onclick="toggleTodo(${t.id})">✔ Ολοκληρώθηκε</button></td>
@@ -1047,49 +1044,27 @@ function render(){
     }).join('');
   }
 
-  // ── Ολοκληρωμένες εργασίες ────────────────────────────────────────────────
-  const doneTodos=todos.filter(t=>t.done).sort((a,b)=>{
-    // Sort by completion date, most recent first
-    return(b.doneAt||'').localeCompare(a.doneAt||'');
-  });
-  const doneSection=document.getElementById('done-section');
-  if(doneSection){
+  // ── Ολοκληρωμένες εργασίες (separate tab) ────────────────────────────────
+  const doneTodos=todos.filter(t=>t.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
+  const tbd=document.getElementById('tbody-done');
+  if(tbd){
     if(!doneTodos.length){
-      doneSection.innerHTML='';
+      tbd.innerHTML=`<tr><td colspan="8"><div class="empty-state"><span class="icon">✔</span><p>Δεν υπάρχουν ολοκληρωμένες εργασίες ακόμα.</p></div></td></tr>`;
     }else{
-      const isOpen=doneSection.dataset.open!=='false';
-      doneSection.innerHTML=`
-        <div class="done-section-header ${isOpen?'open':''}" onclick="toggleDoneSection()">
-          <div class="dsh-line"></div>
-          <div class="dsh-label">✔ Ολοκληρωμένες (${doneTodos.length})</div>
-          <div class="dsh-arrow">▼</div>
-          <div class="dsh-line"></div>
-        </div>
-        <div id="done-list" style="display:${isOpen?'block':'none'}">
-          <div class="table-wrap">
-            <table>
-              <thead><tr>
-                <th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th>
-                <th>Πληροφορίες</th><th style="text-align:center">Ολοκληρώθηκε</th>
-                <th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th>
-              </tr></thead>
-              <tbody>${doneTodos.map((t,i)=>{
-                const dateLbl=t.date?new Date(t.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
-                const doneLbl=t.doneAt?new Date(t.doneAt).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
-                return`<tr class="todo-done">
-                  <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
-                  <td><strong>${esc(t.name)}</strong></td>
-                  <td>${dateLbl}</td>
-                  <td class="category"><span>${esc(t.cat||'—')}</span></td>
-                  <td style="color:#9a9080;font-size:.78rem">${esc(t.info||'—')}</td>
-                  <td class="paid-date">✓ ${doneLbl}</td>
-                  <td><button class="action-btn undone-btn" onclick="toggleTodo(${t.id})" style="text-decoration:none">↩ Αναίρεση</button></td>
-                  <td><button class="action-btn del-btn" onclick="deleteTodo(${t.id})" style="text-decoration:none">🗑</button></td>
-                </tr>`;
-              }).join('')}</tbody>
-            </table>
-          </div>
-        </div>`;
+      tbd.innerHTML=doneTodos.map((t,i)=>{
+        const dateLbl=t.date?new Date(t.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+        const doneLbl=t.doneAt?new Date(t.doneAt).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+        return`<tr class="todo-done">
+          <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
+          <td><strong>${esc(t.name)}</strong></td>
+          <td>${dateLbl}</td>
+          <td class="category"><span>${esc(t.cat||'—')}</span></td>
+          <td style="color:#9a9080;font-size:.78rem">${esc(t.info||'—')}</td>
+          <td class="paid-date">✓ ${doneLbl}</td>
+          <td><button class="action-btn undone-btn" onclick="toggleTodo(${t.id})" style="text-decoration:none">↩ Αναίρεση</button></td>
+          <td><button class="action-btn del-btn" onclick="deleteTodo(${t.id})" style="text-decoration:none">🗑</button></td>
+        </tr>`;
+      }).join('');
     }
   }
 }
@@ -1127,14 +1102,12 @@ function renameCategory(type,idx,newName){
 function markPaid(id){
   const idx=pending.findIndex(i=>i.id===id);if(idx===-1)return;
   const item={...pending[idx],paidAt:new Date().toISOString()};
-  if(!catsPaid.includes(item.cat))catsPaid.push(item.cat);
   paid.unshift(item);pending.splice(idx,1);saveState();render();
   toast(`"${item.desc}" μεταφέρθηκε στα Πληρωμένα ✅`,'green');
 }
 function moveBack(id){
   const idx=paid.findIndex(i=>i.id===id);if(idx===-1)return;
   const item={...paid[idx]};delete item.paidAt;
-  if(!catsPay.includes(item.cat))catsPay.push(item.cat);
   pending.push(item);paid.splice(idx,1);saveState();render();
   toast(`"${item.desc}" επέστρεψε στις Προς Πληρωμή ↩`,'red');
 }
@@ -1280,8 +1253,7 @@ function shake(id){
   setTimeout(()=>{el.style.borderColor='';el.style.animation='';},600);
 }
 function clearPayForm(){
-  ['f-desc','f-amount','f-due','f-notes'].forEach(id=>document.getElementById(id).value='');
-  const s=document.getElementById('f-cat');if(s.options.length)s.selectedIndex=0;
+  ['f-desc','f-amount','f-due','f-notes','f-cat'].forEach(id=>document.getElementById(id).value='');
 }
 let formOpen=false;
 function toggleForm(){
@@ -1290,7 +1262,7 @@ function toggleForm(){
   if(formOpen)setTimeout(()=>document.getElementById('f-desc').focus(),50);
 }
 function switchTab(which){
-  const tabs=['pay','paid','cat','todo','shop','sum'];
+  const tabs=['pay','paid','todo','done','shop','sum'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===which));
   tabs.forEach(id=>document.getElementById(`panel-${id}`).classList.toggle('active',id===which));
   // Sync bottom nav
@@ -1302,8 +1274,10 @@ function switchTab(which){
 function updateBnavBadges(){
   const bp=document.getElementById('bnav-badge-pay');
   const bt=document.getElementById('bnav-badge-todo');
+  const bd=document.getElementById('bnav-badge-done');
   if(bp){ const n=pending.length; bp.textContent=n||''; bp.style.display=n?'flex':'none'; }
   if(bt){ const n=todos.filter(t=>!t.done).length; bt.textContent=n||''; bt.style.display=n?'flex':'none'; }
+  if(bd){ const n=todos.filter(t=>t.done).length; bd.textContent=n||''; bd.style.display=n?'flex':'none'; }
 }
 let toastTimer;
 function toast(msg,type){
@@ -1318,15 +1292,6 @@ function setTodoFilter(f){
   render();
 }
 
-function toggleDoneSection(){
-  const sec=document.getElementById('done-section');
-  const hdr=sec.querySelector('.done-section-header');
-  const list=document.getElementById('done-list');
-  const isOpen=hdr.classList.contains('open');
-  hdr.classList.toggle('open',!isOpen);
-  list.style.display=isOpen?'none':'block';
-  sec.dataset.open=String(!isOpen);
-}
 
 
 
