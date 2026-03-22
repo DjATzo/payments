@@ -899,6 +899,47 @@ function nextOccurrence(freq){
 }
 
 
+function renderRecurList(){
+  const wrap=document.getElementById('recur-list');
+  if(!wrap) return;
+  if(!recurs.length){
+    wrap.innerHTML=`<div class="empty-state"><span class="icon">🔁</span><p>Δεν υπάρχουν επαναλαμβανόμενα ακόμα.<br>Προσθέστε πράγματα που γίνονται συχνά.</p></div>`;
+    return;
+  }
+  const today=new Date(); today.setHours(0,0,0,0);
+  // Sort by next occurrence
+  const sorted=[...recurs].sort((a,b)=>{
+    const na=nextOccurrence(a.freq),nb=nextOccurrence(b.freq);
+    if(!na&&!nb) return 0; if(!na) return 1; if(!nb) return -1;
+    return na-nb;
+  });
+  wrap.innerHTML=sorted.map(r=>{
+    const next=nextOccurrence(r.freq);
+    const diff=next?Math.ceil((next-today)/86400000):null;
+    let nextHtml='';
+    if(diff===null) nextHtml='<span class="recur-next">—</span>';
+    else if(diff===0) nextHtml='<span class="recur-next today">● Σήμερα</span>';
+    else if(diff===1) nextHtml='<span class="recur-next soon">● Αύριο</span>';
+    else nextHtml=`<span class="recur-next">● σε ${diff} μέρες</span>`;
+    const amtHtml=r.amount?`<span style="font-family:var(--serif);font-size:.82rem;font-weight:600;color:var(--ink)">€${fmt(r.amount)}</span>`:'';
+    return`<div class="recur-card">
+      <div class="recur-card-left">
+        <div class="recur-card-name">${esc(r.name)} ${amtHtml}</div>
+        <div class="recur-card-meta">
+          <span class="recur-freq-badge">🔁 ${esc(freqLabel(r.freq))}</span>
+          ${r.cat?`<span class="sum-item-cat">${esc(r.cat)}</span>`:''}
+          ${nextHtml}
+        </div>
+        ${r.notes?`<div class="recur-card-notes">${esc(r.notes)}</div>`:''}
+      </div>
+      <div class="recur-card-actions">
+        <button class="action-btn del-btn" style="width:auto;padding:5px 10px;" onclick="deleteRecur(${r.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
 function render(){
   // Stats
   const total=pending.reduce((s,i)=>s+i.amount,0);
@@ -1025,6 +1066,7 @@ function render(){
   // ── Σύνολο ───────────────────────────────────────────────────────────────────
   const sumContent=document.getElementById('sum-content');
   if(sumContent){
+    try{
     const nowS=new Date(); nowS.setHours(0,0,0,0);
     const tomS=new Date(nowS); tomS.setDate(tomS.getDate()+1);
     const endWeekS=new Date(nowS); endWeekS.setDate(endWeekS.getDate()+(7-nowS.getDay())%7||7);
@@ -1156,6 +1198,12 @@ function render(){
     if(!allItems.length) listHtml=`<div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμή αντικείμενα!</p></div>`;
 
     sumContent.innerHTML=`<div class="sum-grid">${cardHtml}</div>${listHtml}`;
+    }catch(e){
+      sumContent.innerHTML=`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:4px;padding:16px;color:#991b1b;font-family:monospace;font-size:.8rem;">
+        <strong>⚠ Σφάλμα Σύνολο:</strong><br>${e.message}<br><br>
+        <small>${(e.stack||'').split('\n').slice(0,4).join('<br>')}</small>
+      </div>`;
+    }
   }
 
 
@@ -1652,46 +1700,6 @@ function deleteRecur(id){
   recurs=recurs.filter(r=>r.id!==id);
   saveState();render();
   toast(`"${r.name}" διαγράφηκε 🗑`,'del');
-}
-
-function renderRecurList(){
-  const wrap=document.getElementById('recur-list');
-  if(!wrap) return;
-  if(!recurs.length){
-    wrap.innerHTML=`<div class="empty-state"><span class="icon">🔁</span><p>Δεν υπάρχουν επαναλαμβανόμενα ακόμα.<br>Προσθέστε πράγματα που γίνονται συχνά.</p></div>`;
-    return;
-  }
-  const today=new Date(); today.setHours(0,0,0,0);
-  // Sort by next occurrence
-  const sorted=[...recurs].sort((a,b)=>{
-    const na=nextOccurrence(a.freq),nb=nextOccurrence(b.freq);
-    if(!na&&!nb) return 0; if(!na) return 1; if(!nb) return -1;
-    return na-nb;
-  });
-  wrap.innerHTML=sorted.map(r=>{
-    const next=nextOccurrence(r.freq);
-    const diff=next?Math.ceil((next-today)/86400000):null;
-    let nextHtml='';
-    if(diff===null) nextHtml='<span class="recur-next">—</span>';
-    else if(diff===0) nextHtml='<span class="recur-next today">● Σήμερα</span>';
-    else if(diff===1) nextHtml='<span class="recur-next soon">● Αύριο</span>';
-    else nextHtml=`<span class="recur-next">● σε ${diff} μέρες</span>`;
-    const amtHtml=r.amount?`<span style="font-family:var(--serif);font-size:.82rem;font-weight:600;color:var(--ink)">€${fmt(r.amount)}</span>`:'';
-    return`<div class="recur-card">
-      <div class="recur-card-left">
-        <div class="recur-card-name">${esc(r.name)} ${amtHtml}</div>
-        <div class="recur-card-meta">
-          <span class="recur-freq-badge">🔁 ${esc(freqLabel(r.freq))}</span>
-          ${r.cat?`<span class="sum-item-cat">${esc(r.cat)}</span>`:''}
-          ${nextHtml}
-        </div>
-        ${r.notes?`<div class="recur-card-notes">${esc(r.notes)}</div>`:''}
-      </div>
-      <div class="recur-card-actions">
-        <button class="action-btn del-btn" style="width:auto;padding:5px 10px;" onclick="deleteRecur(${r.id})">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 loadState();render();
