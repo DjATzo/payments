@@ -129,7 +129,12 @@ body{background:var(--paper);color:var(--ink);font-family:var(--mono);min-height
 .stat-value{font-family:var(--serif);font-size:1.4rem;font-weight:700;color:var(--ink);}
 .stat-value.money::before{content:'€';font-size:.9rem;margin-right:2px;}
 @media(max-width:700px){.stats{grid-template-columns:repeat(4,1fr);gap:6px;}}
-.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px;flex-wrap:wrap;}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:0;flex-wrap:wrap;}
+.subtabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px;background:var(--paper2);padding:0 4px;}
+.subtabs.hidden{display:none;}
+.subtab{padding:8px 18px;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:#9a9080;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px;}
+.subtab:hover{color:var(--ink);}
+.subtab.active{color:var(--ink);border-bottom-color:var(--accent);font-weight:500;background:white;border-radius:3px 3px 0 0;}
 .tab{padding:10px 20px;font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:#9a9080;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:8px;}
 .tab:hover{color:var(--ink);}
 .tab.active{color:var(--ink);border-bottom-color:var(--ink);font-weight:500;}
@@ -433,10 +438,14 @@ tr.todo-done .action-btn{text-decoration:none;}
     z-index:200;
     border-top:2px solid rgba(255,255,255,.1);
     padding-bottom:env(safe-area-inset-bottom);
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
   }
+  #bottom-nav::-webkit-scrollbar{display:none;}
   .bnav-btn{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:8px 2px 6px;
+    flex:0 0 auto;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:8px 6px 6px;
     background:none;border:none;color:rgba(255,255,255,.5);
     font-family:var(--mono);font-size:.52rem;letter-spacing:.03em;text-transform:uppercase;
     cursor:pointer;gap:3px;transition:color .15s;position:relative;
@@ -455,6 +464,14 @@ tr.todo-done .action-btn{text-decoration:none;}
     font-family:var(--mono);
   }
   .bnav-btn.active .bnav-badge{background:var(--paid-accent);}
+  /* Toggle hint dot on combined buttons */
+  #bnav-pay::before,#bnav-todo::before,#bnav-shop::before{
+    content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+    width:16px;height:2px;background:rgba(255,255,255,.2);border-radius:1px;
+  }
+  #bnav-pay.active::before,#bnav-todo.active::before,#bnav-shop.active::before{
+    background:rgba(255,255,255,.4);
+  }
 
   /* Forms: single column */
   .form-grid{grid-template-columns:1fr 1fr;}
@@ -569,16 +586,22 @@ tr.todo-done .action-btn{text-decoration:none;}
 </div>
 
 <div class="tabs">
-  <button class="tab weather-tab" onclick="switchTab('weather')"> 🌤 Καιρός</button>
-  <button class="tab active"   onclick="switchTab('pay')">  📋 Προς Πληρωμή  <span class="badge" id="badge-pay">0</span></button>
-  <button class="tab paid-tab" onclick="switchTab('paid')"> ✅ Πληρωμένα     <span class="badge" id="badge-paid">0</span></button>
-  <button class="tab todo-tab"  onclick="switchTab('todo')">  ☑ Εργασίες      <span class="badge" id="badge-todo">0</span></button>
-  <button class="tab done-tab"  onclick="switchTab('done')">  ✔ Ολοκληρωμένες <span class="badge" id="badge-done">0</span></button>
-  <button class="tab shop-tab"  onclick="switchTab('shop')">  🛍 Να εισπραχθούν        <span class="badge" id="badge-shop">0</span></button>
-  <button class="tab coll-tab"  onclick="switchTab('coll')">  💰 Εισπράχθηκαν <span class="badge" id="badge-coll">0</span></button>
-  <button class="tab recur-tab" onclick="switchTab('recur')"> 🔁 Επαναλαμβ.   <span class="badge" id="badge-recur">0</span></button>
-  <button class="tab sum-tab"   onclick="switchTab('sum')">   📊 Σύνολο        <span class="badge" id="badge-sum">0</span></button>
+  <button class="tab weather-tab" id="tab-weather" onclick="switchGroup('weather')"> 🌤 Καιρός</button>
+  <button class="tab active" id="tab-pay" onclick="switchGroup('pay')"> 📋 Πληρωμές <span class="badge" id="badge-pay">0</span></button>
+  <button class="tab todo-tab" id="tab-todo" onclick="switchGroup('todo')"> ☑ Εργασίες <span class="badge" id="badge-todo">0</span></button>
+  <button class="tab shop-tab" id="tab-shop" onclick="switchGroup('shop')"> 🛍 Εισπράξεις <span class="badge" id="badge-shop">0</span></button>
+  <button class="tab recur-tab" id="tab-recur" onclick="switchGroup('recur')"> 🔁 Επαναλαμβ. <span class="badge" id="badge-recur">0</span></button>
+  <button class="tab sum-tab" id="tab-sum" onclick="switchGroup('sum')">   📊 Σύνολο <span class="badge" id="badge-sum">0</span></button>
+</div>
 
+<!-- Sub-tab bar (shown for groups with sub-tabs) -->
+<div class="subtabs" id="subtabs">
+  <button class="subtab active" id="subtab-pay"  onclick="switchTab('pay')">  📋 Προς Πληρωμή  <span class="badge" id="badge-pay2">0</span></button>
+  <button class="subtab"        id="subtab-paid" onclick="switchTab('paid')"> ✅ Πληρωμένα</button>
+  <button class="subtab active" id="subtab-todo" onclick="switchTab('todo')" style="display:none"> ☑ Εργασίες <span class="badge" id="badge-todo2">0</span></button>
+  <button class="subtab"        id="subtab-done" onclick="switchTab('done')" style="display:none"> ✔ Ολοκληρωμένες</button>
+  <button class="subtab active" id="subtab-shop" onclick="switchTab('shop')" style="display:none"> 🛍 Να εισπραχθούν <span class="badge" id="badge-shop2">0</span></button>
+  <button class="subtab"        id="subtab-coll" onclick="switchTab('coll')" style="display:none"> 💰 Εισπράχθηκαν</button>
 </div>
 
 <!-- ΚΑΙΡΟΣ -->
@@ -797,34 +820,23 @@ tr.todo-done .action-btn{text-decoration:none;}
     <span class="bnav-icon">🌤</span>
     <span>Καιρός</span>
   </button>
-  <button class="bnav-btn active" onclick="switchTab('pay')" id="bnav-pay">
-    <span class="bnav-icon">📋</span>
-    <span>Πληρωμή</span>
+  <!-- Προς Πληρωμή / Πληρωμένα toggle -->
+  <button class="bnav-btn active" onclick="mobileToggle('pay','paid',this)" id="bnav-pay">
+    <span class="bnav-icon" id="bnav-pay-icon">📋</span>
+    <span id="bnav-pay-label">Πληρωμές</span>
     <span class="bnav-badge" id="bnav-badge-pay"></span>
   </button>
-  <button class="bnav-btn" onclick="switchTab('paid')" id="bnav-paid">
-    <span class="bnav-icon">✅</span>
-    <span>Πληρωμένα</span>
-  </button>
-  <button class="bnav-btn" onclick="switchTab('todo')" id="bnav-todo">
-    <span class="bnav-icon">☑</span>
-    <span>Εργασίες</span>
+  <!-- Εργασίες / Ολοκληρωμένες toggle -->
+  <button class="bnav-btn" onclick="mobileToggle('todo','done',this)" id="bnav-todo">
+    <span class="bnav-icon" id="bnav-todo-icon">☑</span>
+    <span id="bnav-todo-label">Εργασίες</span>
     <span class="bnav-badge" id="bnav-badge-todo"></span>
   </button>
-  <button class="bnav-btn" onclick="switchTab('done')" id="bnav-done">
-    <span class="bnav-icon">✔</span>
-    <span>Ολοκλ.</span>
-    <span class="bnav-badge" id="bnav-badge-done"></span>
-  </button>
-  <button class="bnav-btn" onclick="switchTab('shop')" id="bnav-shop">
-    <span class="bnav-icon">🛍</span>
-    <span>Να εισπραχθούν</span>
+  <!-- Να εισπραχθούν / Εισπράχθηκαν toggle -->
+  <button class="bnav-btn" onclick="mobileToggle('shop','coll',this)" id="bnav-shop">
+    <span class="bnav-icon" id="bnav-shop-icon">🛍</span>
+    <span id="bnav-shop-label">Εισπράξεις</span>
     <span class="bnav-badge" id="bnav-badge-shop"></span>
-  </button>
-  <button class="bnav-btn" onclick="switchTab('coll')" id="bnav-coll">
-    <span class="bnav-icon">💰</span>
-    <span>Εισπράχθ.</span>
-    <span class="bnav-badge" id="bnav-badge-coll"></span>
   </button>
   <button class="bnav-btn" onclick="switchTab('recur')" id="bnav-recur">
     <span class="bnav-icon">🔁</span>
@@ -1159,13 +1171,14 @@ function render(){
   document.getElementById('count-tomorrow').textContent=allSumItems.filter(_isTom).length;
   document.getElementById('count-all').textContent=todos.filter(t=>!t.done).length+pending.length+shops.length+recurs.length;
   document.getElementById('badge-pay').textContent=pending.length;
-  document.getElementById('badge-paid').textContent=paid.length;
   document.getElementById('badge-todo').textContent=todos.filter(t=>!t.done).length;
-  document.getElementById('badge-done').textContent=todos.filter(t=>t.done).length+recurLog.length;
   document.getElementById('badge-shop').textContent=shops.length;
-  document.getElementById('badge-coll').textContent=collectedShops.length;
   document.getElementById('badge-sum').textContent=todos.filter(t=>!t.done).length+pending.length+shops.length+recurs.length;
   document.getElementById('badge-recur').textContent=recurs.length;
+  // subtab badges
+  const bp2=document.getElementById('badge-pay2'); if(bp2) bp2.textContent=pending.length||'';
+  const bt2=document.getElementById('badge-todo2'); if(bt2) bt2.textContent=todos.filter(t=>!t.done).length||'';
+  const bs2=document.getElementById('badge-shop2'); if(bs2) bs2.textContent=shops.length||'';
   renderRecurList();
   if(typeof updateBnavBadges==='function') updateBnavBadges();
 
@@ -1842,31 +1855,137 @@ function toggleForm(){
   document.getElementById('add-form').classList.toggle('open',formOpen);
   if(formOpen)setTimeout(()=>document.getElementById('f-desc').focus(),50);
 }
+// ── Tab routing ───────────────────────────────────────────────────────────────
+const TAB_GROUPS={
+  weather:{subs:[]},
+  pay:    {subs:['pay','paid']},
+  todo:   {subs:['todo','done']},
+  shop:   {subs:['shop','coll']},
+  recur:  {subs:[]},
+  sum:    {subs:[]},
+};
+// which sub-tab was last active per group
+const lastSubTab={pay:'pay', todo:'todo', shop:'shop'};
+
+function switchGroup(group){
+  // Activate group tab
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const gt=document.getElementById('tab-'+group);
+  if(gt) gt.classList.add('active');
+
+  const g=TAB_GROUPS[group];
+  const subtabBar=document.getElementById('subtabs');
+
+  if(!g||!g.subs.length){
+    // No sub-tabs: hide sub bar, show panel directly
+    subtabBar.classList.add('hidden');
+    // hide all subtab buttons
+    document.querySelectorAll('.subtab').forEach(s=>s.style.display='none');
+    // activate panel
+    const allPanels=['weather','pay','paid','todo','done','shop','coll','recur','sum'];
+    allPanels.forEach(id=>document.getElementById(`panel-${id}`)?.classList.toggle('active',id===group));
+    // sync bottom nav
+    _syncBnav(group);
+    if(group==='weather') renderWeatherTab();
+  } else {
+    // Has sub-tabs: show sub bar with this group's subs
+    subtabBar.classList.remove('hidden');
+    // Hide all subtabs first
+    document.querySelectorAll('.subtab').forEach(s=>s.style.display='none');
+    // Show only this group's subtabs
+    g.subs.forEach(s=>{
+      const el=document.getElementById('subtab-'+s);
+      if(el) el.style.display='flex';
+    });
+    // Switch to last active sub of this group
+    switchTab(lastSubTab[group]||g.subs[0]);
+  }
+}
+
 function switchTab(which){
-  const tabs=['weather','pay','paid','todo','done','shop','coll','recur','sum'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===which));
-  tabs.forEach(id=>document.getElementById(`panel-${id}`)?.classList.toggle('active',id===which));
+  // Find which group this tab belongs to
+  const group=Object.keys(TAB_GROUPS).find(g=>TAB_GROUPS[g].subs.includes(which))||which;
+  lastSubTab[group]=which;
+
+  // Activate group tab
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const gt=document.getElementById('tab-'+group);
+  if(gt) gt.classList.add('active');
+
+  // Activate sub-tab button
+  document.querySelectorAll('.subtab').forEach(s=>s.classList.remove('active'));
+  const st=document.getElementById('subtab-'+which);
+  if(st) st.classList.add('active');
+
+  // Show/hide sub bar
+  const subtabBar=document.getElementById('subtabs');
+  const hasSubs=TAB_GROUPS[group]?.subs.length>0;
+  if(hasSubs){
+    subtabBar.classList.remove('hidden');
+    TAB_GROUPS[group].subs.forEach(s=>{
+      const el=document.getElementById('subtab-'+s);
+      if(el) el.style.display='flex';
+    });
+    // Hide other groups' subtabs
+    Object.keys(TAB_GROUPS).forEach(g=>{
+      if(g!==group) TAB_GROUPS[g].subs.forEach(s=>{
+        const el=document.getElementById('subtab-'+s);
+        if(el&&g!==group) el.style.display='none';
+      });
+    });
+  } else {
+    subtabBar.classList.add('hidden');
+  }
+
+  // Show/hide panels
+  const allPanels=['weather','pay','paid','todo','done','shop','coll','recur','sum'];
+  allPanels.forEach(id=>document.getElementById(`panel-${id}`)?.classList.toggle('active',id===which));
+
   // Sync bottom nav
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
-  const nb=document.getElementById('bnav-'+which);
-  if(nb) nb.classList.add('active');
-  // Load weather if switching to it
+  _syncBnav(which);
+
   if(which==='weather') renderWeatherTab();
+}
+
+function _syncBnav(which){
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  const mobileMap={
+    pay:'pay',paid:'pay',todo:'todo',done:'todo',shop:'shop',coll:'shop',
+    weather:'weather',recur:'recur',sum:'sum'
+  };
+  const bnavId='bnav-'+(mobileMap[which]||which);
+  const nb=document.getElementById(bnavId);
+  if(nb){
+    nb.classList.add('active');
+    // Update icon/label for toggle buttons
+    const mIcons={pay:'📋',paid:'✅',todo:'☑',done:'✔',shop:'🛍',coll:'💰'};
+    const mLabels={pay:'Πληρωμές',paid:'Πληρωμένα',todo:'Εργασίες',done:'Ολοκλ.',shop:'Να εισπραχθ.',coll:'Εισπράχθ.'};
+    if(mIcons[which]){
+      const iconEl=nb.querySelector('[id$="-icon"]');
+      const labelEl=nb.querySelector('[id$="-label"]');
+      if(iconEl) iconEl.textContent=mIcons[which];
+      if(labelEl) labelEl.textContent=mLabels[which];
+    }
+    nb.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});
+  }
+}
+
+function mobileToggle(tabA, tabB, btnEl){
+  const groupKey=btnEl.id.replace('bnav-','');
+  const current=lastSubTab[groupKey]||tabA;
+  const next=current===tabA?tabB:tabA;
+  switchTab(next);
 }
 
 function updateBnavBadges(){
   const bp=document.getElementById('bnav-badge-pay');
   const bt=document.getElementById('bnav-badge-todo');
-  const bd=document.getElementById('bnav-badge-done');
   if(bp){ const n=pending.length; bp.textContent=n||''; bp.style.display=n?'flex':'none'; }
   if(bt){ const n=todos.filter(t=>!t.done).length; bt.textContent=n||''; bt.style.display=n?'flex':'none'; }
-  if(bd){ const n=todos.filter(t=>t.done).length+recurLog.length; bd.textContent=n||''; bd.style.display=n?'flex':'none'; }
   const br=document.getElementById('bnav-badge-recur');
   if(br){ const n=recurs.length; br.textContent=n||''; br.style.display=n?'flex':'none'; }
   const bsh=document.getElementById('bnav-badge-shop');
   if(bsh){ const n=shops.length; bsh.textContent=n||''; bsh.style.display=n?'flex':'none'; }
-  const bcl=document.getElementById('bnav-badge-coll');
-  if(bcl){ const n=collectedShops.length; bcl.textContent=n||''; bcl.style.display=n?'flex':'none'; }
   const bs=document.getElementById('bnav-badge-sum');
   if(bs){ const n=todos.filter(t=>!t.done).length+pending.length+shops.length+recurs.length; bs.textContent=n||''; bs.style.display=n?'flex':'none'; }
 }
@@ -2394,7 +2513,7 @@ function renderWeatherData(root, city, weather){
     </div>`;
 }
 
-loadState();render();
+loadState();render();switchGroup('pay');
 
 // ── PWA: Inline Manifest ──────────────────────────────────────────────────────
 (function(){
