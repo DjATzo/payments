@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Διαχείριση Πληρωμών</title>
-<meta name="description" content="Παρακολούθηση πληρωμών, εργασιών και ψωνιών">
+<meta name="description" content="Παρακολούθηση πληρωμών, εργασιών και να εισπραχθούν">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -118,12 +118,17 @@ body{background:var(--paper);color:var(--ink);font-family:var(--mono);min-height
 .stat{background:white;border:1.5px solid var(--border);border-radius:4px;padding:14px 18px;position:relative;overflow:hidden;}
 .stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
 .stat.s-pay::before{background:var(--accent);}
-.stat.s-paid::before{background:var(--paid-accent);}
 .stat.s-total::before{background:var(--gold);}
 .stat.s-todo::before{background:var(--todo-accent);}
+.stat.s-shop::before{background:#8b4513;}
+.stat.s-grand::before{background:#6d28d9;}
+.stat.s-past::before{background:#b91c1c;}
+.stat.s-today::before{background:var(--accent);}
+.stat.s-tomorrow::before{background:#d97706;}
 .stat-label{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#9a9080;margin-bottom:4px;}
 .stat-value{font-family:var(--serif);font-size:1.4rem;font-weight:700;color:var(--ink);}
 .stat-value.money::before{content:'€';font-size:.9rem;margin-right:2px;}
+@media(max-width:700px){.stats{grid-template-columns:repeat(4,1fr);gap:6px;}}
 .tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px;flex-wrap:wrap;}
 .tab{padding:10px 20px;font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:#9a9080;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:8px;}
 .tab:hover{color:var(--ink);}
@@ -238,6 +243,8 @@ td.paid-date{color:var(--paid-accent);font-size:.78rem;}
 .tab.done-tab.active{border-bottom-color:#374151;}
 .tab.done-tab.active .badge{background:#374151;}
 .tab.shop-tab.active{border-bottom-color:#8b4513;}
+.tab.coll-tab.active{border-bottom-color:#15803d;}
+.tab.coll-tab.active .badge{background:#15803d;}
 .tab.shop-tab.active .badge{background:#8b4513;}
 .tab.sum-tab.active{border-bottom-color:#374151;}
 .tab.sum-tab.active .badge{background:#374151;}
@@ -300,6 +307,18 @@ tr.todo-done .action-btn{text-decoration:none;}
 .recur-day-btn.last.active{background:#d97706;border-color:#d97706;color:white;}
 #recur-extra-fields{display:none;margin-top:10px;}
 
+
+.tab.set-tab.active{border-bottom-color:#374151;}
+.tab.set-tab.active .badge{background:#374151;}
+.settings-section{background:white;border:1.5px solid var(--border);border-radius:4px;padding:20px;margin-bottom:16px;}
+.settings-section h3{font-family:var(--serif);font-size:1rem;margin-bottom:14px;color:var(--ink);}
+.settings-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.settings-label{font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;color:#9a9080;min-width:120px;}
+.settings-select{border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;flex:1;min-width:200px;}
+.settings-select:focus{border-color:var(--ink);}
+.settings-info{font-size:.75rem;color:#9a9080;margin-top:6px;font-style:italic;}
+.tz-current{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--paper2);border-radius:10px;font-size:.75rem;color:var(--ink);margin-top:6px;}
+
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 /* PWA install banner */
 #pwa-install-bar{display:none;align-items:center;gap:10px;background:var(--ink);color:white;padding:12px 20px;border-radius:4px;margin-bottom:20px;font-size:.8rem;}
@@ -336,11 +355,11 @@ tr.todo-done .action-btn{text-decoration:none;}
   .header p{font-size:.72rem;}
   .header::before{margin-bottom:10px;}
 
-  /* Stats: 2x2 grid, smaller */
-  .stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
-  .stat{padding:10px 12px;}
-  .stat-label{font-size:.62rem;}
-  .stat-value{font-size:1.1rem;}
+  /* Stats: 4 per row, smaller */
+  .stats{grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:16px;}
+  .stat{padding:7px 8px;}
+  .stat-label{font-size:.52rem;}
+  .stat-value{font-size:.88rem;}
 
   /* Hide desktop tab bar — replaced by bottom nav */
   .tabs{display:none;}
@@ -412,6 +431,9 @@ tr.todo-done .action-btn{text-decoration:none;}
   #pwa-install-bar .pwa-msg{font-size:.75rem;}
 }
 
+/* Settings overlay */
+#settings-overlay{display:none;position:fixed;inset:0;background:var(--paper);z-index:500;overflow-y:auto;}
+#settings-overlay.open{display:block;animation:slideUp .25s ease;}
 /* Desktop: hide bottom nav */
 @media(min-width:701px){
   #bottom-nav{display:none;}
@@ -440,27 +462,48 @@ tr.todo-done .action-btn{text-decoration:none;}
 </div>
 
 <div class="header">
-  <h1>Διαχείριση <span>Πληρωμών</span></h1>
+  <div style="position:relative;display:inline-block;">
+    <h1>Διαχείριση <span>Πληρωμών</span></h1>
+    <button class="settings-gear-btn" onclick="openSettings()" title="Ρυθμίσεις">⚙️</button>
+  </div>
   <p>Παρακολούθηση · Σήμανση ως πληρωμένο · Λίστα εργασιών</p>
   <div id="save-indicator" class="save-indicator">● Αποθηκεύτηκε αυτόματα</div>
 </div>
 
 <div class="stats">
-  <div class="stat s-pay">
+  <!-- Row 1: financials -->
+  <div class="stat s-pay" style="cursor:pointer" onclick="switchTab('pay')">
     <div class="stat-label">Προς Πληρωμή</div>
     <div class="stat-value" id="count-pending">0 εγγραφές</div>
   </div>
-  <div class="stat s-paid">
-    <div class="stat-label">Πληρωμένα</div>
-    <div class="stat-value" id="count-paid">0 εγγραφές</div>
-  </div>
   <div class="stat s-total">
-    <div class="stat-label">Σύνολο Οφειλής</div>
+    <div class="stat-label">Σύνολο Προς Πληρωμή</div>
     <div class="stat-value money" id="total-amount">0,00</div>
   </div>
-  <div class="stat s-todo">
-    <div class="stat-label">Εκκρεμείς Εργασίες</div>
-    <div class="stat-value" id="count-todo">0 εργασίες</div>
+  <div class="stat s-shop" style="cursor:pointer" onclick="switchTab('shop')">
+    <div class="stat-label">Να Εισπραχθούν</div>
+    <div class="stat-value" id="count-shop">0 εγγραφές</div>
+  </div>
+  <div class="stat s-grand">
+    <div class="stat-label">Σύνολο Να Εισπραχθούν</div>
+    <div class="stat-value money" id="total-shop">0,00</div>
+  </div>
+  <!-- Row 2: timeline -->
+  <div class="stat s-grand" style="cursor:pointer" onclick="switchTab('sum')">
+    <div class="stat-label">Σύνολο</div>
+    <div class="stat-value" id="count-all">0</div>
+  </div>
+  <div class="stat s-past" style="cursor:pointer" onclick="switchTab('sum')">
+    <div class="stat-label">⚠ Παλιά</div>
+    <div class="stat-value" id="count-past">0</div>
+  </div>
+  <div class="stat s-today" style="cursor:pointer" onclick="switchTab('sum')">
+    <div class="stat-label">📌 Σήμερα</div>
+    <div class="stat-value" id="count-today">0</div>
+  </div>
+  <div class="stat s-tomorrow" style="cursor:pointer" onclick="switchTab('sum')">
+    <div class="stat-label">⏰ Αύριο</div>
+    <div class="stat-value" id="count-tomorrow">0</div>
   </div>
 </div>
 
@@ -469,7 +512,8 @@ tr.todo-done .action-btn{text-decoration:none;}
   <button class="tab paid-tab" onclick="switchTab('paid')"> ✅ Πληρωμένα     <span class="badge" id="badge-paid">0</span></button>
   <button class="tab todo-tab"  onclick="switchTab('todo')">  ☑ Εργασίες      <span class="badge" id="badge-todo">0</span></button>
   <button class="tab done-tab"  onclick="switchTab('done')">  ✔ Ολοκληρωμένες <span class="badge" id="badge-done">0</span></button>
-  <button class="tab shop-tab"  onclick="switchTab('shop')">  🛍 Ψώνια        <span class="badge" id="badge-shop">0</span></button>
+  <button class="tab shop-tab"  onclick="switchTab('shop')">  🛍 Να εισπραχθούν        <span class="badge" id="badge-shop">0</span></button>
+  <button class="tab coll-tab"  onclick="switchTab('coll')">  💰 Εισπράχθηκαν <span class="badge" id="badge-coll">0</span></button>
   <button class="tab recur-tab" onclick="switchTab('recur')"> 🔁 Επαναλαμβ.   <span class="badge" id="badge-recur">0</span></button>
   <button class="tab sum-tab"   onclick="switchTab('sum')">   📊 Σύνολο        <span class="badge" id="badge-sum">0</span></button>
 
@@ -551,11 +595,11 @@ tr.todo-done .action-btn{text-decoration:none;}
 
 <!-- ΨΩΝΙΑ -->
 <div class="panel" id="panel-shop">
-  <button class="btn" style="background:#8b4513;color:white;margin-bottom:16px;" onclick="toggleShopForm()">+ Νέο Ψώνι</button>
+  <button class="btn" style="background:#8b4513;color:white;margin-bottom:16px;" onclick="toggleShopForm()">+ Νέα Εγγραφή</button>
   <div class="add-form" id="shop-form">
-    <h3>Νέο Ψώνι — Πράγμα που πλήρωσα &amp; θέλω να πάρω πίσω</h3>
+    <h3>Νέα Εγγραφή — Χρήματα που μου χρωστάνε 💸</h3>
     <div class="form-grid">
-      <div class="form-field"><label>Περιγραφή *</label><input type="text" id="sh-desc" placeholder="π.χ. Επιστροφή από κατάστημα"></div>
+      <div class="form-field"><label>Περιγραφή *</label><input type="text" id="sh-desc" placeholder="π.χ. Νίκος, Μαρία..."></div>
       <div class="form-field"><label>Ποσό (€) *</label><input type="number" id="sh-amount" placeholder="0,00" step="0.01" min="0"></div>
       <div class="form-field"><label>Ημερομηνία</label><input type="date" id="sh-date"></div>
       <div class="form-field"><label>Κατηγορία</label><input type="text" id="sh-cat" placeholder="π.χ. Ηλεκτρονικά"></div>
@@ -570,12 +614,21 @@ tr.todo-done .action-btn{text-decoration:none;}
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Σημειώσεις</th><th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th></tr></thead>
+      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Σημειώσεις</th><th style="text-align:center">Εισπράχθηκε</th><th style="text-align:center">🗑</th></tr></thead>
       <tbody id="tbody-shop"></tbody>
     </table>
   </div>
 </div>
 
+<!-- ΕΙΣΠΡΑΧΘΗΚΑΝ -->
+<div class="panel" id="panel-coll">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Σημειώσεις</th><th>Εισπράχθηκε</th><th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th></tr></thead>
+      <tbody id="tbody-coll"></tbody>
+    </table>
+  </div>
+</div>
 
 <!-- ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΑ -->
 <div class="panel" id="panel-recur">
@@ -634,12 +687,36 @@ tr.todo-done .action-btn{text-decoration:none;}
   <div id="recur-list"></div>
 </div>
 
+    <div class="tz-current" id="tz-current">🕐 Τρέχουσα: —</div>
+    <div class="settings-info">Επηρεάζει τον υπολογισμό "σήμερα" για επαναλαμβανόμενα και ειδοποιήσεις.</div>
+  </div>
+</div>
+
 <!-- ΣΥΝΟΛΟ -->
 <div class="panel" id="panel-sum">
   <div id="sum-content"></div>
 </div>
 
 </div><!-- end .app -->
+
+<!-- Settings overlay -->
+<div id="settings-overlay">
+  <div class="settings-overlay-header">
+    <button class="settings-close-btn" onclick="closeSettings()">✕</button>
+    <h2>⚙️ Ρυθμίσεις</h2>
+  </div>
+  <div class="settings-body">
+    <div class="settings-section">
+      <h3>🌍 Ζώνη Ώρας</h3>
+      <div class="settings-row">
+        <span class="settings-label">Ζώνη ώρας</span>
+        <select class="settings-select" id="tz-select" onchange="saveTz(this.value)"></select>
+      </div>
+      <div class="tz-current" id="tz-current">🕐 Τρέχουσα: —</div>
+      <div class="settings-info">Επηρεάζει τον υπολογισμό "σήμερα" για επαναλαμβανόμενα και ειδοποιήσεις.</div>
+    </div>
+  </div>
+</div>
 
 <!-- Bottom navigation (mobile only) -->
 <nav id="bottom-nav">
@@ -664,7 +741,13 @@ tr.todo-done .action-btn{text-decoration:none;}
   </button>
   <button class="bnav-btn" onclick="switchTab('shop')" id="bnav-shop">
     <span class="bnav-icon">🛍</span>
-    <span>Ψώνια</span>
+    <span>Να εισπραχθούν</span>
+    <span class="bnav-badge" id="bnav-badge-shop"></span>
+  </button>
+  <button class="bnav-btn" onclick="switchTab('coll')" id="bnav-coll">
+    <span class="bnav-icon">💰</span>
+    <span>Εισπράχθ.</span>
+    <span class="bnav-badge" id="bnav-badge-coll"></span>
   </button>
   <button class="bnav-btn" onclick="switchTab('recur')" id="bnav-recur">
     <span class="bnav-icon">🔁</span>
@@ -674,6 +757,7 @@ tr.todo-done .action-btn{text-decoration:none;}
   <button class="bnav-btn" onclick="switchTab('sum')" id="bnav-sum">
     <span class="bnav-icon">📊</span>
     <span>Σύνολο</span>
+    <span class="bnav-badge" id="bnav-badge-sum"></span>
   </button>
 </nav>
 
@@ -697,9 +781,25 @@ const DEFAULT_PENDING=[
 
 let pending=[],paid=[],nextId=8,catsPay=[],catsPaid=[],todos=[],nextTodoId=1;
 let shops=[],nextShopId=1;
+let collectedShops=[];
+const KEY_COLLECTED='pt_collected';
 let recurs=[],nextRecurId=1;
+let recurLog=[];
+let userTz=Intl.DateTimeFormat().resolvedOptions().timeZone;
 let todoFilter='all';
-const KEY_RECURS='pt_recurs',KEY_RECUR_ID='pt_recur_id';
+const KEY_RECURS='pt_recurs',KEY_RECUR_ID='pt_recur_id',KEY_RECUR_LOG='pt_recur_log',KEY_TZ='pt_timezone';
+
+// Returns today's date string (YYYY-MM-DD) in the selected timezone
+function todayStr(){
+  return new Date().toLocaleDateString('en-CA',{timeZone:userTz}); // en-CA gives YYYY-MM-DD
+}
+// Returns a Date object set to midnight of today in user's timezone
+function todayDate(){
+  const s=todayStr();
+  const [y,m,d]=s.split('-').map(Number);
+  const dt=new Date(y,m-1,d); dt.setHours(0,0,0,0);
+  return dt;
+}
 
 
 function getStateObj(){
@@ -708,7 +808,9 @@ function getStateObj(){
     catsPay, catsPaid,
     todos, nextTodoId,
     shops, nextShopId,
-    recurs, nextRecurId
+    collectedShops,
+    recurs, nextRecurId,
+    recurLog
   };
 }
 window.__getStateObj = getStateObj;
@@ -723,9 +825,11 @@ function applyStateObj(d){
     if(d.todos     !== undefined) todos      = d.todos;
     if(d.nextTodoId!== undefined) nextTodoId = d.nextTodoId;
     if(d.shops     !== undefined) shops      = d.shops;
-    if(d.nextShopId!== undefined) nextShopId = d.nextShopId;
+    if(d.nextShopId   !== undefined) nextShopId    = d.nextShopId;
+    if(d.collectedShops!==undefined) collectedShops= d.collectedShops;
     if(d.recurs     !== undefined) recurs     = d.recurs;
     if(d.nextRecurId!== undefined) nextRecurId= d.nextRecurId;
+    if(d.recurLog    !== undefined) recurLog   = d.recurLog;
     // Also mirror to localStorage for offline use
     localStorage.setItem(KEY_PENDING, JSON.stringify(pending));
     localStorage.setItem(KEY_PAID,    JSON.stringify(paid));
@@ -779,15 +883,21 @@ function loadState(){
       nextTodoId=parseInt(localStorage.getItem(KEY_TODO_ID)||'1');
       shops=JSON.parse(localStorage.getItem(KEY_SHOPS)||'[]');
       nextShopId=parseInt(localStorage.getItem(KEY_SHOP_ID)||'1');
+      collectedShops=JSON.parse(localStorage.getItem(KEY_COLLECTED)||'[]');
       recurs=JSON.parse(localStorage.getItem(KEY_RECURS)||'[]');
       nextRecurId=parseInt(localStorage.getItem(KEY_RECUR_ID)||'1');
+      recurLog=JSON.parse(localStorage.getItem(KEY_RECUR_LOG)||'[]');
+      const savedTz=localStorage.getItem(KEY_TZ);
+      if(savedTz) userTz=savedTz;
     }
   }catch(e){
     pending=DEFAULT_PENDING;paid=[];nextId=8;
     catsPay=[...DEFAULT_CATS];catsPaid=[...DEFAULT_CATS];
     todos=[];nextTodoId=1;
     shops=[];nextShopId=1;
+    collectedShops=[];
     recurs=[];nextRecurId=1;
+    recurLog=[];
   }
 }
 
@@ -802,8 +912,10 @@ function saveState(){
     localStorage.setItem(KEY_TODO_ID,String(nextTodoId));
     localStorage.setItem(KEY_SHOPS,JSON.stringify(shops));
     localStorage.setItem(KEY_SHOP_ID,String(nextShopId));
+    localStorage.setItem(KEY_COLLECTED,JSON.stringify(collectedShops));
     localStorage.setItem(KEY_RECURS,JSON.stringify(recurs));
     localStorage.setItem(KEY_RECUR_ID,String(nextRecurId));
+    localStorage.setItem(KEY_RECUR_LOG,JSON.stringify(recurLog));
     // Push to Firebase if signed in
     if(window.__fbSave && window.__fbReady) window.__fbSave(getStateObj());
     const el=document.getElementById('save-indicator');
@@ -850,7 +962,7 @@ function freqLabel(freq){
 }
 
 function nextOccurrence(freq){
-  const today=new Date(); today.setHours(0,0,0,0);
+  const today=todayDate();
   if(!freq) return null;
   if(freq.type==='daily') return today;
   if(freq.type==='range') return today;
@@ -874,7 +986,7 @@ function nextOccurrence(freq){
       return an-bn;
     });
     if(!days.length) return null;
-    const now=new Date(); now.setHours(0,0,0,0);
+    const now=todayDate();
     const yr=now.getFullYear(),mo=now.getMonth();
     const lastDay=new Date(yr,mo+1,0).getDate();
     // Try this month first
@@ -906,7 +1018,7 @@ function renderRecurList(){
     wrap.innerHTML=`<div class="empty-state"><span class="icon">🔁</span><p>Δεν υπάρχουν επαναλαμβανόμενα ακόμα.<br>Προσθέστε πράγματα που γίνονται συχνά.</p></div>`;
     return;
   }
-  const today=new Date(); today.setHours(0,0,0,0);
+  const today=todayDate();
   // Sort by next occurrence
   const sorted=[...recurs].sort((a,b)=>{
     const na=nextOccurrence(a.freq),nb=nextOccurrence(b.freq);
@@ -941,19 +1053,41 @@ function renderRecurList(){
 
 
 function render(){
+  try{
   // Stats
   const total=pending.reduce((s,i)=>s+i.amount,0);
   const openTodos=todos.filter(t=>!t.done);
   document.getElementById('count-pending').textContent=pending.length+(pending.length===1?' εγγραφή':' εγγραφές');
-  document.getElementById('count-paid').textContent=paid.length+(paid.length===1?' εγγραφή':' εγγραφές');
   document.getElementById('total-amount').textContent=fmt(total);
-  document.getElementById('count-todo').textContent=openTodos.length+(openTodos.length===1?' εκκρεμής':' εκκρεμείς');
+  const shopTotal=shops.reduce((s,i)=>s+(i.amount||0),0);
+  document.getElementById('count-shop').textContent=shops.length+(shops.length===1?' εγγραφή':' εγγραφές');
+  document.getElementById('total-shop').textContent=fmt(shopTotal);
+
+  // Παλιά / Σήμερα / Αύριο — count across all item types
+  const _now=todayDate();
+  const _tom=new Date(_now); _tom.setDate(_tom.getDate()+1);
+  function _dateOf(d){ return d?new Date(d):null; }
+  function _isToday(d){ const dd=_dateOf(d); return dd&&dd.toDateString()===_now.toDateString(); }
+  function _isTom(d){   const dd=_dateOf(d); return dd&&dd.toDateString()===_tom.toDateString(); }
+  function _isPast(d){  const dd=_dateOf(d); return dd&&dd<_now; }
+
+  const allSumItems=[
+    ...todos.filter(t=>!t.done).map(t=>t.date),
+    ...pending.map(p=>p.due),
+    ...shops.map(s=>s.date),
+    ...recurs.map(r=>{ const n=nextOccurrence(r.freq); return n?`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`:''; })
+  ];
+  document.getElementById('count-past').textContent=allSumItems.filter(_isPast).length;
+  document.getElementById('count-today').textContent=allSumItems.filter(_isToday).length;
+  document.getElementById('count-tomorrow').textContent=allSumItems.filter(_isTom).length;
+  document.getElementById('count-all').textContent=todos.filter(t=>!t.done).length+pending.length+shops.length+recurs.length;
   document.getElementById('badge-pay').textContent=pending.length;
   document.getElementById('badge-paid').textContent=paid.length;
   document.getElementById('badge-todo').textContent=todos.filter(t=>!t.done).length;
-  document.getElementById('badge-done').textContent=todos.filter(t=>t.done).length;
+  document.getElementById('badge-done').textContent=todos.filter(t=>t.done).length+recurLog.length;
   document.getElementById('badge-shop').textContent=shops.length;
-  document.getElementById('badge-sum').textContent=todos.filter(t=>!t.done).length;
+  document.getElementById('badge-coll').textContent=collectedShops.length;
+  document.getElementById('badge-sum').textContent=todos.filter(t=>!t.done).length+pending.length+shops.length+recurs.length;
   document.getElementById('badge-recur').textContent=recurs.length;
   renderRecurList();
   if(typeof updateBnavBadges==='function') updateBnavBadges();
@@ -1014,7 +1148,7 @@ function render(){
         <td class="paid-date">✓ ${new Date(item.paidAt).toLocaleDateString('el-GR')}</td>
         <td><div class="action-cell">
           ${item.shopRef!=null
-            ? `<button class="action-btn shop-btn" onclick="moveBackToShop(${item.id})">↩ Ψώνια</button>`
+            ? `<button class="action-btn shop-btn" onclick="moveBackToShop(${item.id})">↩ Να εισπραχθούν</button>`
             : `<button class="action-btn back-btn" onclick="moveBack(${item.id})">↩ Αναίρεση</button>`
           }
           <button class="action-btn del-btn" onclick="deletePaid(${item.id})">🗑 Διαγραφή</button>
@@ -1028,7 +1162,7 @@ function render(){
   paid.forEach(i=>usedPaid[i.cat]=(usedPaid[i.cat]||0)+1);
   function buildCatList(listId,cats,usedMap,type){
     const el=document.getElementById(listId);
-    if(!cats.length){el.innerHTML=`<div style="color:#9a9080;font-size:.78rem;font-style:italic;padding:8px 4px;">Δεν υπάρχουν κατηγορίες ακόμα.</div>`;return;}
+    if(!el) return;
     el.innerHTML=cats.map((cat,idx)=>{
       const count=usedMap[cat]||0;
       return`<div class="cat-item">
@@ -1043,10 +1177,10 @@ function render(){
   buildCatList('cat-list-pay',catsPay,usedPay,'pay');
   buildCatList('cat-list-paid',catsPaid,usedPaid,'paid');
 
-  // ── Ψώνια ────────────────────────────────────────────────────────────────────
+  // ── Να εισπραχθούν ────────────────────────────────────────────────────────────────────
   const tbs=document.getElementById('tbody-shop');
   if(!shops.length){
-    tbs.innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">🛍</span><p>Δεν υπάρχουν καταγεγραμμένα ψώνια.<br>Προσθέστε πράγματα που πληρώσατε και περιμένετε επιστροφή.</p></div></td></tr>`;
+    tbs.innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">🛍</span><p>Δεν υπάρχουν εκκρεμή ψώνια.<br>Προσθέστε χρήματα που σας χρωστάνε.</p></div></td></tr>`;
   }else{
     tbs.innerHTML=sortByDate(shops,'date').map((s,i)=>`
       <tr>
@@ -1057,17 +1191,39 @@ function render(){
         <td class="category"><span>${esc(s.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(s.notes||'—')}</td>
         <td><div class="action-cell">
-          <button class="action-btn pay-btn" onclick="markShopPaid(${s.id})">✅ Πληρωμένα</button>
+          <button class="action-btn pay-btn" onclick="markShopCollected(${s.id})">💰 Εισπράχθηκε</button>
           <button class="action-btn del-btn" onclick="deleteShop(${s.id})">🗑 Διαγραφή</button>
         </div></td>
       </tr>`).join('');
+  }
+
+  // ── Εισπράχθηκαν ─────────────────────────────────────────────────────────────
+  const tbc=document.getElementById('tbody-coll');
+  if(tbc){
+    if(!collectedShops.length){
+      tbc.innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">💰</span><p>Δεν υπάρχουν εισπραχθέντα ακόμα.</p></div></td></tr>`;
+    }else{
+      const sortedColl=[...collectedShops].sort((a,b)=>(b.collectedAt||'').localeCompare(a.collectedAt||''));
+      tbc.innerHTML=sortedColl.map((s,i)=>`
+        <tr>
+          <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
+          <td><strong>${esc(s.desc)}</strong></td>
+          <td class="amount" style="color:var(--paid-accent)">€ ${fmt(s.amount)}</td>
+          <td>${s.date?new Date(s.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
+          <td class="category"><span>${esc(s.cat||'—')}</span></td>
+          <td style="color:#9a9080;font-size:.78rem">${esc(s.notes||'—')}</td>
+          <td class="paid-date">✓ ${new Date(s.collectedAt).toLocaleDateString('el-GR')}</td>
+          <td><button class="action-btn back-btn" onclick="uncollectShop(${s.id})">↩ Αναίρεση</button></td>
+          <td><button class="action-btn del-btn" onclick="deleteCollected(${s.id})">🗑</button></td>
+        </tr>`).join('');
+    }
   }
 
   // ── Σύνολο ───────────────────────────────────────────────────────────────────
   const sumContent=document.getElementById('sum-content');
   if(sumContent){
     try{
-    const nowS=new Date(); nowS.setHours(0,0,0,0);
+    const nowS=todayDate();
     const tomS=new Date(nowS); tomS.setDate(tomS.getDate()+1);
     const endWeekS=new Date(nowS); endWeekS.setDate(endWeekS.getDate()+(7-nowS.getDay())%7||7);
     const endNextWeekS=new Date(endWeekS); endNextWeekS.setDate(endNextWeekS.getDate()+7);
@@ -1091,15 +1247,97 @@ function render(){
         name:s.desc, date:s.date||'', cat:s.cat||'', info:s.notes||'',
         amount:s.amount
       })),
-      ...recurs.map(r=>{
-        const next=nextOccurrence(r.freq);
-        // Use local date string to avoid UTC timezone shift
-        const dateStr=next?`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-${String(next.getDate()).padStart(2,'0')}`:'';
-        return {
-          id:r.id, type:'recur',
-          name:r.name, date:dateStr, cat:r.cat||'', info:freqLabel(r.freq),
-          amount:r.amount||null
-        };
+      ...recurs.flatMap(r=>{
+        function nextOccurrenceAfter(freq, afterDate){
+          const d = new Date(afterDate); d.setDate(d.getDate()+1); d.setHours(0,0,0,0);
+          if(!freq) return null;
+          if(freq.type==='daily') return d;
+          if(freq.type==='range'){
+            const step=freq.days||1;
+            return new Date(afterDate.getTime()+step*86400000);
+          }
+          if(freq.type==='weekly'){
+            const days=(freq.weekdays||[]).map(Number).sort((a,b)=>a-b);
+            if(!days.length) return null;
+            const dow=d.getDay();
+            let found=days.find(x=>x>=dow);
+            if(found===undefined) found=days[0];
+            const diff=((found-dow)+7)%7||7;
+            const r2=new Date(d); r2.setDate(r2.getDate()+(diff===0?7:diff));
+            return r2;
+          }
+          if(freq.type==='monthly'){
+            const days=(freq.monthdays||[]).slice().sort((a,b)=>(a==='last'?32:Number(a))-(b==='last'?32:Number(b)));
+            if(!days.length) return null;
+            for(let mo=0; mo<=1; mo++){
+              const yr=d.getFullYear(), m=(d.getMonth()+mo)%12, y=m<d.getMonth()&&mo===0?yr:yr+(d.getMonth()+mo>=12?1:0);
+              const lastDay=new Date(y,m+1,0).getDate();
+              for(const day of days){
+                const dd=day==='last'?lastDay:Number(day);
+                if(dd>lastDay) continue;
+                const cand=new Date(y,m,dd);
+                if(cand>afterDate) return cand;
+              }
+            }
+            return null;
+          }
+          return null;
+        }
+        function toLocalStr(dt){ return dt?`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`:''; }
+
+        const entries=[];
+        const first=nextOccurrence(r.freq); // today or future
+        const firstStr=toLocalStr(first);
+
+        // Check if there's an overdue unchecked occurrence
+        // (first occurrence is today/future, so overdue = anything before today not yet checked)
+        // We detect overdue by seeing if first > today (meaning today was skipped)
+        if(first && first>nowS){
+          // first is in the future — there may be overdue occurrences before today
+          // Show them in past if not already checked
+          // Walk backwards: find the occurrence just before today
+          // Simplest: use nextOccurrenceAfter starting from day before yesterday until we find one < today
+          // For daily/range: just go back one step
+          let overdueDate = null;
+          if(r.freq.type==='daily'){
+            const d2=new Date(nowS); d2.setDate(d2.getDate()-1);
+            overdueDate=d2;
+          } else if(r.freq.type==='range'){
+            const step=r.freq.days||1;
+            const d2=new Date(first.getTime()-step*86400000);
+            if(d2<nowS) overdueDate=d2;
+          } else {
+            // For weekly/monthly: find the occurrence just before today
+            // Try each day in the past 60 days
+            for(let back=1;back<=60;back++){
+              const d2=new Date(nowS); d2.setDate(d2.getDate()-back);
+              const next2=nextOccurrenceAfter(r.freq, new Date(d2.getTime()-86400000));
+              if(next2 && toLocalStr(next2)===toLocalStr(d2)){
+                overdueDate=d2; break;
+              }
+            }
+          }
+          if(overdueDate){
+            const overdueStr=toLocalStr(overdueDate);
+            const alreadyDone=recurLog.some(l=>l.recurId===r.id&&l.date===overdueStr);
+            if(!alreadyDone){
+              entries.push({id:r.id,type:'recur',name:r.name,date:overdueStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Εκπρόθεσμο'});
+            }
+          }
+        }
+
+        // Always add 2 upcoming (today or future) occurrences
+        if(first){
+          const alreadyDone1=recurLog.some(l=>l.recurId===r.id&&l.date===firstStr);
+          entries.push({id:r.id,type:'recur',name:r.name,date:firstStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:alreadyDone1?'✔ Έγινε':'Τώρα'});
+          const second=nextOccurrenceAfter(r.freq, first);
+          if(second){
+            const secondStr=toLocalStr(second);
+            const alreadyDone2=recurLog.some(l=>l.recurId===r.id&&l.date===secondStr);
+            entries.push({id:r.id,type:'recur',name:r.name,date:secondStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:alreadyDone2?'✔ Έγινε':'Επόμενο'});
+          }
+        }
+        return entries;
       }),
     ];
 
@@ -1141,7 +1379,7 @@ function render(){
     function typeBadge(type){
       if(type==='todo')  return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#e0f2fe;color:#0369a1;margin-right:2px">☑ Εργασία</span>';
       if(type==='pay')   return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#fef3c7;color:#92400e;margin-right:2px">💳 Πληρωμή</span>';
-      if(type==='shop')  return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#fce7f3;color:#9d174d;margin-right:2px">🛍 Ψώνι</span>';
+      if(type==='shop')  return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#fce7f3;color:#9d174d;margin-right:2px">🛍 Να εισπραχθεί</span>';
       if(type==='recur') return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#ede9fe;color:#5b21b6;margin-right:2px">🔁 Επαναλ.</span>';
       return'';
     }
@@ -1151,8 +1389,12 @@ function render(){
       if(item.type==='todo')  return`<button class="action-btn done-btn" style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="toggleTodo(${item.id})">✔</button>`;
       if(item.type==='pay')   return`<button class="action-btn pay-btn"  style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="markPaid(${item.id})">✅</button>`;
       if(item.type==='shop')  return`<button class="action-btn shop-btn" style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="undoShop(${item.id})">↩</button>`;
-      if(item.type==='recur') return`<button class="action-btn" style="width:auto;padding:4px 10px;font-size:.65rem;background:#6d28d9;color:white;border:none;border-radius:3px;cursor:pointer;" onclick="switchTab('recur')">🔁</button>`;
-      return'';
+      if(item.type==='recur'){
+        const alreadyDone=recurLog.some(l=>l.recurId===item.id&&l.date===item.date);
+        return alreadyDone
+          ? `<button class="action-btn" style="width:auto;padding:4px 10px;font-size:.65rem;background:#6b7280;color:white;border:none;border-radius:3px;cursor:default;">✔ Έγινε</button>`
+          : `<button class="action-btn done-btn" style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="markRecurDone(${item.id},'${item.date}','${(item.name||'').replace(/'/g,"\\'")}')">☐ Έγινε</button>`;
+      }
     }
 
     function renderItems(items){
@@ -1167,10 +1409,11 @@ function render(){
         const dotColor=item.type==='pay'?'var(--accent)':item.type==='shop'?'#8b4513':item.type==='recur'?'#6d28d9':overdue?'var(--accent)':!item.date?'#9ca3af':'var(--todo-accent)';
         const amtHtml=item.amount!=null?`<span style="font-family:var(--serif);font-size:.82rem;font-weight:600;color:#374151;margin-left:4px">€${fmt(item.amount)}</span>`:'';
         const infoHtml=item.type==='recur'&&item.info?`<span style="font-size:.65rem;color:#6d28d9;margin-left:4px">${esc(item.info)}</span>`:'';
+        const recurLabelHtml=item.recurLabel?`<span style="font-size:.62rem;padding:1px 5px;border-radius:8px;margin-left:4px;background:${item.recurLabel==='Τώρα'?'#6d28d9':item.recurLabel==='Εκπρόθεσμο'?'#b91c1c':item.recurLabel==='✔ Έγινε'?'#6b7280':'#c4b5fd'};color:white">${item.recurLabel}</span>`:'';
         return`<div class="sum-item${overdue?' overdue':''}">
           <div class="sum-item-dot" style="background:${dotColor}"></div>
           ${typeBadge(item.type)}
-          <div class="sum-item-name">${esc(item.name)}${amtHtml}${infoHtml}</div>
+          <div class="sum-item-name">${esc(item.name)}${amtHtml}${recurLabelHtml}${infoHtml}</div>
           ${item.cat?`<span class="sum-item-cat">${esc(item.cat)}</span>`:''}
           <div class="sum-item-date">${dateLbl}</div>
           ${typeAction(item)}
@@ -1208,7 +1451,7 @@ function render(){
 
 
   // To Do — filter counts
-  const now2=new Date(); now2.setHours(0,0,0,0);
+  const now2=todayDate();
   const tom=new Date(now2); tom.setDate(tom.getDate()+1);
   const endWeek=new Date(now2); endWeek.setDate(endWeek.getDate()+(6-now2.getDay())+1);
   const endMonth=new Date(now2.getFullYear(),now2.getMonth()+1,0);
@@ -1280,26 +1523,46 @@ function render(){
 
   // ── Ολοκληρωμένες εργασίες (separate tab) ────────────────────────────────
   const doneTodos=todos.filter(t=>t.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
+  // Merge recurLog entries into done list
+  const recurDoneItems=recurLog.slice().sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
+  const allDoneItems=[
+    ...doneTodos.map(t=>({type:'todo',id:t.id,name:t.name,date:t.date||'',cat:t.cat||'',info:t.info||'',doneAt:t.doneAt||''})),
+    ...recurDoneItems.map(l=>({type:'recur',id:l.recurId,name:l.name,date:l.date,cat:'',info:'🔁 Επαναλαμβανόμενο',doneAt:l.doneAt,logDate:l.date}))
+  ].sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
   const tbd=document.getElementById('tbody-done');
   if(tbd){
-    if(!doneTodos.length){
+    if(!allDoneItems.length){
       tbd.innerHTML=`<tr><td colspan="8"><div class="empty-state"><span class="icon">✔</span><p>Δεν υπάρχουν ολοκληρωμένες εργασίες ακόμα.</p></div></td></tr>`;
     }else{
-      tbd.innerHTML=doneTodos.map((t,i)=>{
+      tbd.innerHTML=allDoneItems.map((t,i)=>{
         const dateLbl=t.date?new Date(t.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
         const doneLbl=t.doneAt?new Date(t.doneAt).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+        const typeBadgeHtml=t.type==='recur'
+          ?'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#ede9fe;color:#5b21b6;margin-right:4px">🔁</span>'
+          :'';
+        const undoBtn=t.type==='todo'
+          ?`<button class="action-btn undone-btn" onclick="toggleTodo(${t.id})" style="text-decoration:none">↩ Αναίρεση</button>`
+          :`<button class="action-btn undone-btn" onclick="undoRecurDone(${t.id},'${t.logDate}')" style="text-decoration:none">↩ Αναίρεση</button>`;
         return`<tr class="todo-done">
           <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
-          <td><strong>${esc(t.name)}</strong></td>
+          <td>${typeBadgeHtml}<strong>${esc(t.name)}</strong></td>
           <td>${dateLbl}</td>
           <td class="category"><span>${esc(t.cat||'—')}</span></td>
           <td style="color:#9a9080;font-size:.78rem">${esc(t.info||'—')}</td>
           <td class="paid-date">✓ ${doneLbl}</td>
-          <td><button class="action-btn undone-btn" onclick="toggleTodo(${t.id})" style="text-decoration:none">↩ Αναίρεση</button></td>
-          <td><button class="action-btn del-btn" onclick="deleteTodo(${t.id})" style="text-decoration:none">🗑</button></td>
+          <td>${undoBtn}</td>
+          <td><button class="action-btn del-btn" onclick="${t.type==='todo'?`deleteTodo(${t.id})`:`deleteRecurLog(${t.id},'${t.logDate}')`}" style="text-decoration:none">🗑</button></td>
         </tr>`;
       }).join('');
     }
+  }
+  }catch(e){
+    console.error('render() crash:', e);
+    const el=document.getElementById('count-pending');
+    if(el) el.closest('.app') && (document.body.insertAdjacentHTML('afterbegin',
+      `<div style="position:fixed;top:0;left:0;right:0;background:#991b1b;color:white;padding:12px;font-family:monospace;font-size:.75rem;z-index:9999">
+        ⚠ Render error: ${e.message} — ${(e.stack||'').split('\n')[1]||''}
+      </div>`));
   }
 }
 
@@ -1349,7 +1612,7 @@ function moveBack(id){
 function moveBackToShop(id){
   const idx=paid.findIndex(i=>i.id===id);if(idx===-1)return;
   const item=paid[idx];
-  // Return to Ψώνια
+  // Return to Να εισπραχθούν
   shops.push({
     id:nextShopId++, desc:item.desc, amount:item.amount,
     date:item.due||'', cat:item.cat, notes:item.notes||'',
@@ -1358,7 +1621,7 @@ function moveBackToShop(id){
   paid.splice(idx,1);
   saveState();render();
   switchTab('shop');
-  toast(`"${item.desc}" επέστρεψε στα Ψώνια ↩`,'red');
+  toast(`"${item.desc}" επέστρεψε στα Να εισπραχθούν ↩`,'red');
 }
 function deletePending(id){
   const idx=pending.findIndex(i=>i.id===id);if(idx===-1)return;
@@ -1420,7 +1683,7 @@ function deleteTodo(id){
 }
 
 
-// ── Ψώνια ─────────────────────────────────────────────────────────────────────
+// ── Να εισπραχθούν ─────────────────────────────────────────────────────────────────────
 let shopFormOpen=false;
 function toggleShopForm(){
   shopFormOpen=!shopFormOpen;
@@ -1435,7 +1698,7 @@ function addShop(){
   const notes=document.getElementById('sh-notes').value.trim();
   if(!desc){shake('sh-desc');return;}
   if(!amount||amount<=0){shake('sh-amount');return;}
-  // Always origin='shop' — item goes to Πληρωμένα, undo returns to Ψώνια
+  // Always origin='shop' — item goes to Πληρωμένα, undo returns to Να εισπραχθούν
   shops.push({id:nextShopId++,desc,amount,date,cat,notes,origin:'shop',createdAt:new Date().toISOString()});
   saveState();render();toggleShopForm();
   ['sh-desc','sh-amount','sh-date','sh-cat','sh-notes'].forEach(id=>document.getElementById(id).value='');
@@ -1456,21 +1719,28 @@ function undoShop(id){
   saveState();render();
   toast('"'+s.desc+'" επέστρεψε στα '+originLabel+' ↩','red');
 }
-function markShopPaid(id){
+function markShopCollected(id){
   const s=shops.find(s=>s.id===id);if(!s)return;
-  // Move from Ψώνια → Πληρωμένα, with a reference back
-  paid.unshift({
-    id:nextId++, desc:s.desc, amount:s.amount, due:s.date,
-    cat:s.cat||'Ψώνια', notes:s.notes,
-    paidAt:new Date().toISOString(),
-    shopRef:s.id  // keeps link so undo can work
-  });
-  if(!catsPaid.includes(s.cat||'Ψώνια')) catsPaid.push(s.cat||'Ψώνια');
+  collectedShops.unshift({...s, collectedAt:new Date().toISOString()});
   shops=shops.filter(x=>x.id!==id);
   saveState();render();
-  // Switch to Πληρωμένα to show it
-  switchTab('paid');
-  toast('"'+s.desc+'" μεταφέρθηκε στα Πληρωμένα ✅','green');
+  switchTab('coll');
+  toast('"'+s.desc+'" εισπράχθηκε 💰','green');
+}
+
+function uncollectShop(id){
+  const s=collectedShops.find(s=>s.id===id);if(!s)return;
+  shops.push({...s});
+  collectedShops=collectedShops.filter(x=>x.id!==id);
+  saveState();render();
+  toast('"'+s.desc+'" επέστρεψε στα Να εισπραχθούν ↩','red');
+}
+
+function deleteCollected(id){
+  const s=collectedShops.find(s=>s.id===id);if(!s)return;
+  if(!confirm('⚠️ Οριστική διαγραφή:\n"'+s.desc+'"\n\nΔεν μπορεί να αναιρεθεί!'))return;
+  collectedShops=collectedShops.filter(x=>x.id!==id);saveState();render();
+  toast('"'+s.desc+'" διαγράφηκε 🗑','del');
 }
 
 function deleteShop(id){
@@ -1496,13 +1766,14 @@ function toggleForm(){
   if(formOpen)setTimeout(()=>document.getElementById('f-desc').focus(),50);
 }
 function switchTab(which){
-  const tabs=['pay','paid','todo','done','shop','recur','sum'];
+  const tabs=['pay','paid','todo','done','shop','coll','recur','sum'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===which));
-  tabs.forEach(id=>document.getElementById(`panel-${id}`).classList.toggle('active',id===which));
+  tabs.forEach(id=>document.getElementById(`panel-${id}`)?.classList.toggle('active',id===which));
   // Sync bottom nav
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
   const nb=document.getElementById('bnav-'+which);
   if(nb) nb.classList.add('active');
+
 }
 
 function updateBnavBadges(){
@@ -1511,9 +1782,15 @@ function updateBnavBadges(){
   const bd=document.getElementById('bnav-badge-done');
   if(bp){ const n=pending.length; bp.textContent=n||''; bp.style.display=n?'flex':'none'; }
   if(bt){ const n=todos.filter(t=>!t.done).length; bt.textContent=n||''; bt.style.display=n?'flex':'none'; }
-  if(bd){ const n=todos.filter(t=>t.done).length; bd.textContent=n||''; bd.style.display=n?'flex':'none'; }
+  if(bd){ const n=todos.filter(t=>t.done).length+recurLog.length; bd.textContent=n||''; bd.style.display=n?'flex':'none'; }
   const br=document.getElementById('bnav-badge-recur');
   if(br){ const n=recurs.length; br.textContent=n||''; br.style.display=n?'flex':'none'; }
+  const bsh=document.getElementById('bnav-badge-shop');
+  if(bsh){ const n=shops.length; bsh.textContent=n||''; bsh.style.display=n?'flex':'none'; }
+  const bcl=document.getElementById('bnav-badge-coll');
+  if(bcl){ const n=collectedShops.length; bcl.textContent=n||''; bcl.style.display=n?'flex':'none'; }
+  const bs=document.getElementById('bnav-badge-sum');
+  if(bs){ const n=todos.filter(t=>!t.done).length+pending.length+shops.length+recurs.length; bs.textContent=n||''; bs.style.display=n?'flex':'none'; }
 }
 let toastTimer;
 function toast(msg,type){
@@ -1537,7 +1814,7 @@ function setTodoFilter(f){
   const manifest={
     name:'Διαχείριση Πληρωμών',
     short_name:'Πληρωμές',
-    description:'Παρακολούθηση πληρωμών, εργασιών και ψωνιών',
+    description:'Παρακολούθηση πληρωμών, εργασιών και να εισπραχθούν',
     start_url:location.href.split('?')[0],
     display:'standalone',
     background_color:'#f5f0e8',
@@ -1698,8 +1975,114 @@ function deleteRecur(id){
   if(!r)return;
   if(!confirm(`⚠️ Διαγραφή:\n"${r.name}"\n\nΔεν μπορεί να αναιρεθεί!`))return;
   recurs=recurs.filter(r=>r.id!==id);
+  recurLog=recurLog.filter(l=>l.recurId!==id);
   saveState();render();
   toast(`"${r.name}" διαγράφηκε 🗑`,'del');
+}
+
+function markRecurDone(id, date, name){
+  if(recurLog.some(l=>l.recurId===id&&l.date===date)) return;
+  recurLog.push({recurId:id, date, name, doneAt:new Date().toISOString()});
+  saveState();render();
+  toast(`"${name}" ✔ Ολοκληρώθηκε`,'todo');
+}
+
+function undoRecurDone(recurId, date){
+  recurLog=recurLog.filter(l=>!(l.recurId===recurId&&l.date===date));
+  saveState();render();
+  toast('Αναιρέθηκε ↩','');
+}
+
+function deleteRecurLog(recurId, date){
+  recurLog=recurLog.filter(l=>!(l.recurId===recurId&&l.date===date));
+  saveState();render();
+  toast('Διαγράφηκε 🗑','del');
+}
+
+// ── Ρυθμίσεις ─────────────────────────────────────────────────────────────────
+const COMMON_TIMEZONES=[
+  {group:'Ευρώπη',zones:[
+    'Europe/Athens','Europe/London','Europe/Paris','Europe/Berlin','Europe/Rome',
+    'Europe/Madrid','Europe/Amsterdam','Europe/Brussels','Europe/Vienna',
+    'Europe/Warsaw','Europe/Prague','Europe/Budapest','Europe/Bucharest',
+    'Europe/Helsinki','Europe/Stockholm','Europe/Oslo','Europe/Copenhagen',
+    'Europe/Lisbon','Europe/Dublin','Europe/Zurich','Europe/Istanbul',
+    'Europe/Moscow','Europe/Kiev',
+  ]},
+  {group:'Αμερική',zones:[
+    'America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
+    'America/Toronto','America/Vancouver','America/Mexico_City',
+    'America/Sao_Paulo','America/Argentina/Buenos_Aires','America/Bogota',
+    'America/Lima','America/Santiago','America/Caracas',
+  ]},
+  {group:'Ασία & Ωκεανία',zones:[
+    'Asia/Dubai','Asia/Riyadh','Asia/Karachi','Asia/Kolkata','Asia/Dhaka',
+    'Asia/Bangkok','Asia/Singapore','Asia/Shanghai','Asia/Tokyo','Asia/Seoul',
+    'Australia/Sydney','Australia/Melbourne','Pacific/Auckland','Pacific/Honolulu',
+  ]},
+  {group:'Αφρική',zones:[
+    'Africa/Cairo','Africa/Johannesburg','Africa/Lagos','Africa/Nairobi',
+  ]},
+];
+
+function tzLabel(tz){
+  try{
+    const offset=new Intl.DateTimeFormat('en',{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName')?.value||'';
+    const city=tz.split('/').pop().replace(/_/g,' ');
+    return `${city} (${offset})`;
+  }catch(e){ return tz; }
+}
+
+function buildTzSelector(){
+  const sel=document.getElementById('tz-select');
+  if(!sel||sel.options.length>1) return; // already built
+  sel.innerHTML='';
+  COMMON_TIMEZONES.forEach(g=>{
+    const grp=document.createElement('optgroup');
+    grp.label=g.group;
+    g.zones.forEach(tz=>{
+      const opt=document.createElement('option');
+      opt.value=tz;
+      opt.textContent=tzLabel(tz);
+      opt.selected=tz===userTz;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
+  // If current tz not in list, add it at top
+  const allZones=COMMON_TIMEZONES.flatMap(g=>g.zones);
+  if(!allZones.includes(userTz)){
+    const opt=document.createElement('option');
+    opt.value=userTz; opt.textContent=tzLabel(userTz); opt.selected=true;
+    sel.insertBefore(opt,sel.firstChild);
+  }
+  updateTzDisplay();
+}
+
+function updateTzDisplay(){
+  const el=document.getElementById('tz-current');
+  if(!el) return;
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString('el-GR',{timeZone:userTz,hour:'2-digit',minute:'2-digit'});
+  const dateStr=now.toLocaleDateString('el-GR',{timeZone:userTz,weekday:'long',day:'numeric',month:'long'});
+  el.textContent=`🕐 ${userTz} — ${dateStr}, ${timeStr}`;
+}
+
+function saveTz(tz){
+  userTz=tz;
+  localStorage.setItem(KEY_TZ,tz);
+  updateTzDisplay();
+  render();
+  toast(`Ζώνη ώρας: ${tz.split('/').pop().replace(/_/g,' ')} ✓`,'todo');
+}
+
+function openSettings(){
+  const ol=document.getElementById('settings-overlay');
+  ol.classList.add('open');
+  buildTzSelector();
+}
+function closeSettings(){
+  document.getElementById('settings-overlay').classList.remove('open');
 }
 
 loadState();render();
@@ -1709,7 +2092,7 @@ loadState();render();
   const manifest={
     name:'Διαχείριση Πληρωμών',
     short_name:'Πληρωμές',
-    description:'Παρακολούθηση πληρωμών, εργασιών και ψωνιών',
+    description:'Παρακολούθηση πληρωμών, εργασιών και να εισπραχθούν',
     start_url:window.location.pathname||'/',
     display:'standalone',
     background_color:'#f5f0e8',
