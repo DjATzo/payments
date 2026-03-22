@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Διαχείριση Πληρωμών</title>
+<meta name="description" content="Παρακολούθηση πληρωμών, εργασιών και ψωνιών">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Πληρωμές">
+<link rel="manifest" id="pwa-manifest">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, onSnapshot, getDoc }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const FIREBASE_CONFIG = window.__FIREBASE_CONFIG__ || {
+  apiKey: "AIzaSyCoKVx8xaobBZivdeCH0YiKkrfK2hPUr0g",
+  authDomain: "list-atzo.firebaseapp.com",
+  projectId: "list-atzo",
+  storageBucket: "list-atzo.firebasestorage.app",
+  messagingSenderId: "535874034272",
+  appId: "1:535874034272:web:7863858a44a6bd56cb0105",
+  measurementId: "G-TVY3Q0MBMK"
+};
+
+{
+  const app  = initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  let uid = null;
+  let unsubscribe = null;
+  let remoteWrite = false; // flag to avoid re-saving when we receive remote data
+
+  function fbDocRef() { return doc(db, 'users', uid, 'data', 'state'); }
+
+  async function fbSave(stateObj) {
+    if (!uid) return;
+    try { await setDoc(fbDocRef(), stateObj); } catch(e) { console.warn('FB save error', e); }
+  }
+
+  function fbListen() {
+    if (unsubscribe) unsubscribe();
+    unsubscribe = onSnapshot(fbDocRef(), snap => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      remoteWrite = true;
+      window.__applyRemoteState(d);
+      remoteWrite = false;
+    });
+  }
+
+  // Expose to main script
+  window.__fbSave = (s) => { if (!remoteWrite) fbSave(s); };
+  window.__fbReady = false;
+
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      uid = user.uid;
+      window.__fbReady = true;
+      updateAuthUI(user);
+      // Load once, then listen
+      const snap = await getDoc(fbDocRef());
+      if (snap.exists()) {
+        remoteWrite = true;
+        window.__applyRemoteState(snap.data());
+        remoteWrite = false;
+      } else {
+        // First time: push local data to cloud
+        window.__fbSave(window.__getStateObj());
+      }
+      fbListen();
+    } else {
+      uid = null;
+      window.__fbReady = false;
+      if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+      updateAuthUI(null);
+    }
+  });
+
+  function updateAuthUI(user) {
+    const bar  = document.getElementById('auth-bar');
+    const info = document.getElementById('auth-user-info');
+    const btn  = document.getElementById('auth-btn');
+    const ind  = document.getElementById('sync-indicator');
+    if (user) {
+      info.textContent = user.displayName || user.email;
+      btn.textContent  = 'Αποσύνδεση';
+      btn.onclick      = () => signOut(auth);
+      ind.style.display = 'inline-flex';
+    } else {
+      info.textContent = 'Δεν έχετε συνδεθεί';
+      btn.textContent  = '🔗 Σύνδεση με Google';
+      btn.onclick      = () => signInWithPopup(auth, new GoogleAuthProvider());
+      ind.style.display = 'none';
+    }
+    bar.style.display = 'flex';
+  }
+}
+</script>
+<style>
+:root{--ink:#1a1a2e;--paper:#f5f0e8;--paper2:#ede8dc;--accent:#c84b31;--paid-accent:#2d6a4f;--gold:#d4a017;--cat-accent:#5c3d8f;--todo-accent:#1a6b8a;--border:#bfb8a8;--shadow:rgba(26,26,46,0.12);--mono:'DM Mono',monospace;--serif:'Fraunces',serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:var(--mono);min-height:100vh;background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(191,184,168,.2) 27px,rgba(191,184,168,.2) 28px),repeating-linear-gradient(90deg,transparent,transparent 27px,rgba(191,184,168,.1) 27px,rgba(191,184,168,.1) 28px);}
+.app{max-width:980px;margin:0 auto;padding:40px 20px 80px;}
+.header{text-align:center;margin-bottom:40px;}
+.header::before{content:'';display:block;width:60px;height:3px;background:var(--accent);margin:0 auto 16px;}
+.header h1{font-family:var(--serif);font-size:2.8rem;font-weight:700;letter-spacing:-.02em;line-height:1.1;}
+.header h1 span{color:var(--accent);}
+.header p{margin-top:10px;font-size:.82rem;color:#7a7264;letter-spacing:.03em;}
+.save-indicator{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:.72rem;color:var(--paid-accent);opacity:0;transition:opacity .4s;}
+.save-indicator.show{opacity:1;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px;}
+.stat{background:white;border:1.5px solid var(--border);border-radius:4px;padding:14px 18px;position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.stat.s-pay::before{background:var(--accent);}
+.stat.s-paid::before{background:var(--paid-accent);}
+.stat.s-total::before{background:var(--gold);}
+.stat.s-todo::before{background:var(--todo-accent);}
+.stat-label{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#9a9080;margin-bottom:4px;}
+.stat-value{font-family:var(--serif);font-size:1.4rem;font-weight:700;color:var(--ink);}
+.stat-value.money::before{content:'€';font-size:.9rem;margin-right:2px;}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px;flex-wrap:wrap;}
+.tab{padding:10px 20px;font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:#9a9080;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:8px;}
+.tab:hover{color:var(--ink);}
+.tab.active{color:var(--ink);border-bottom-color:var(--ink);font-weight:500;}
+.tab .badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:.65rem;font-weight:500;background:var(--ink);color:white;}
+.tab.active .badge{background:var(--accent);}
+.tab.paid-tab.active{border-bottom-color:var(--paid-accent);}
+.tab.paid-tab.active .badge{background:var(--paid-accent);}
+.tab.cat-tab.active{border-bottom-color:var(--cat-accent);}
+.tab.cat-tab.active .badge{background:var(--cat-accent);}
+.tab.todo-tab.active{border-bottom-color:var(--todo-accent);}
+.tab.todo-tab.active .badge{background:var(--todo-accent);}
+
+/* Todo filter bar */
+.todo-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-btn{padding:6px 14px;font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:white;color:#9a9080;border-radius:20px;cursor:pointer;transition:all .15s;}
+.filter-btn:hover{border-color:var(--todo-accent);color:var(--todo-accent);}
+.filter-btn.active{background:var(--todo-accent);border-color:var(--todo-accent);color:white;font-weight:500;}
+.filter-btn .fc{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.3);border-radius:10px;padding:0 5px;font-size:.65rem;margin-left:4px;min-width:16px;}
+.filter-btn:not(.active) .fc{background:var(--paper2);color:var(--ink);}
+.panel{display:none;}
+.panel.active{display:block;}
+.add-form{background:white;border:1.5px solid var(--border);border-radius:4px;padding:20px;margin-bottom:20px;display:none;}
+.add-form.open{display:block;animation:slideDown .2s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.add-form h3{font-family:var(--serif);font-size:1rem;margin-bottom:14px;color:var(--ink);}
+.form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:10px;margin-bottom:12px;}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.form-grid-todo{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:12px;}
+.form-field{display:flex;flex-direction:column;gap:4px;}
+.form-field label{font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;color:#9a9080;}
+.form-field input,.form-field select,.form-field textarea{border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;transition:border-color .15s;}
+.form-field textarea{resize:vertical;min-height:60px;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--ink);}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;}
+.btn{border:none;cursor:pointer;font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;padding:9px 18px;border-radius:3px;transition:all .15s;text-transform:uppercase;}
+.btn-primary{background:var(--ink);color:white;}
+.btn-primary:hover{background:#2d2d4e;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--ink);}
+.btn-add{background:var(--accent);color:white;margin-bottom:16px;}
+.btn-add:hover{background:#a83d28;transform:translateY(-1px);}
+.btn-todo-add{background:var(--todo-accent);color:white;margin-bottom:16px;}
+.btn-todo-add:hover{background:#155a75;transform:translateY(-1px);}
+.table-wrap{background:white;border:1.5px solid var(--border);border-radius:4px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--ink);color:white;}
+thead th{padding:11px 12px;text-align:left;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
+thead th:last-child{text-align:center;width:90px;}
+tbody tr{border-bottom:1px solid var(--paper2);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--paper);}
+tbody td{padding:10px 12px;font-size:.82rem;color:var(--ink);vertical-align:middle;}
+td.amount{font-weight:500;font-family:var(--serif);font-size:.9rem;}
+td.category span{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;background:var(--paper2);color:#6a6050;}
+.action-btn{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 10px;border-radius:3px;font-family:var(--mono);font-size:.68rem;letter-spacing:.03em;font-weight:500;cursor:pointer;border:none;transition:all .15s;width:100%;text-transform:uppercase;}
+.pay-btn{background:var(--paid-accent);color:white;}
+.pay-btn:hover{background:#1f4f38;transform:scale(1.02);}
+.back-btn{background:var(--accent);color:white;}
+.back-btn:hover{background:#a83d28;transform:scale(1.02);}
+.del-btn{background:#7f1d1d;color:white;}
+.del-btn:hover{background:#5c1111;transform:scale(1.02);}
+.done-btn{background:var(--todo-accent);color:white;}
+.done-btn:hover{background:#155a75;transform:scale(1.02);}
+.undone-btn{background:#6b7280;color:white;}
+.undone-btn:hover{background:#4b5563;transform:scale(1.02);}
+/* Todo row done state */
+tr.todo-done td{opacity:.5;text-decoration:line-through;}
+tr.todo-done .action-btn{text-decoration:none;}
+/* Two-button cell */
+.action-cell{display:flex;gap:6px;flex-direction:column;}
+/* Categories */
+.cat-info{margin-bottom:20px;font-size:.8rem;color:#7a7264;font-style:italic;padding:12px 16px;background:white;border:1.5px solid var(--border);border-radius:4px;line-height:1.6;}
+.cat-panel-inner{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.cat-section{background:white;border:1.5px solid var(--border);border-radius:4px;overflow:hidden;}
+.cat-section-head{padding:13px 18px;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;font-weight:500;border-bottom:1px solid var(--paper2);display:flex;align-items:center;gap:8px;}
+.cat-section-head.pay-head{background:#fff5f3;color:var(--accent);}
+.cat-section-head.paid-head{background:#f0faf4;color:var(--paid-accent);}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pay-head .dot{background:var(--accent);}
+.paid-head .dot{background:var(--paid-accent);}
+.cat-list{padding:10px;display:flex;flex-direction:column;gap:5px;min-height:50px;}
+.cat-item{display:flex;align-items:center;padding:8px 10px;border-radius:3px;border:1.5px solid var(--paper2);background:var(--paper);gap:8px;transition:border-color .15s;}
+.cat-item:hover{border-color:var(--border);}
+.cat-name-input{border:none;background:transparent;font-family:var(--mono);font-size:.82rem;color:var(--ink);outline:none;flex:1;padding:0;min-width:0;cursor:text;}
+.cat-name-input:focus{border-bottom:1px solid var(--ink);}
+.cat-count{font-size:.68rem;color:#9a9080;padding:2px 6px;background:var(--paper2);border-radius:10px;white-space:nowrap;flex-shrink:0;}
+.cat-del{background:none;border:none;cursor:pointer;color:#c0b0a8;font-size:.9rem;padding:2px 5px;border-radius:2px;transition:color .15s;line-height:1;flex-shrink:0;}
+.cat-del:hover:not(:disabled){color:var(--accent);}
+.cat-del:disabled{opacity:.25;cursor:not-allowed;}
+.cat-add-row{padding:10px;border-top:1px solid var(--paper2);display:flex;gap:8px;}
+.cat-add-input{flex:1;border:1.5px solid var(--border);background:var(--paper);padding:7px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;transition:border-color .15s;}
+.cat-add-input:focus{border-color:var(--cat-accent);}
+.cat-add-btn{background:var(--cat-accent);color:white;border:none;padding:7px 16px;border-radius:3px;font-family:var(--mono);font-size:.75rem;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.cat-add-btn:hover{background:#4a2f78;}
+.empty-state{text-align:center;padding:50px 20px;color:#9a9080;}
+.empty-state .icon{font-size:2.5rem;margin-bottom:10px;display:block;}
+.empty-state p{font-size:.82rem;}
+.toast{position:fixed;bottom:30px;right:30px;padding:14px 22px;background:var(--ink);color:white;font-family:var(--mono);font-size:.8rem;border-radius:4px;box-shadow:0 8px 32px var(--shadow);transform:translateY(100px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;display:flex;align-items:center;gap:10px;max-width:360px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.green{background:var(--paid-accent);}
+.toast.red{background:var(--accent);}
+.toast.purple{background:var(--cat-accent);}
+.toast.del{background:#7f1d1d;}
+.toast.todo{background:var(--todo-accent);}
+.due-chip{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;}
+.due-chip.overdue{color:var(--accent);}
+.due-chip.soon{color:#b85c00;}
+.due-chip.ok{color:#2d6a4f;}
+td.paid-date{color:var(--paid-accent);font-size:.78rem;}
+
+.tab.shop-tab.active{border-bottom-color:#8b4513;}
+.tab.shop-tab.active .badge{background:#8b4513;}
+.tab.sum-tab.active{border-bottom-color:#374151;}
+.tab.sum-tab.active .badge{background:#374151;}
+.shop-btn{background:#8b4513;color:white;}
+.shop-btn:hover{background:#6b3410;transform:scale(1.02);}
+.origin-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+/* Summary cards */
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.sum-card{background:white;border:1.5px solid var(--border);border-radius:4px;padding:18px 20px;position:relative;overflow:hidden;}
+.sum-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.sum-card.sc-past::before{background:var(--accent);}
+.sum-card.sc-today::before{background:var(--todo-accent);}
+.sum-card.sc-tomorrow::before{background:#d97706;}
+.sum-card.sc-week::before{background:#7c3aed;}
+.sum-card.sc-month::before{background:var(--paid-accent);}
+.sum-card.sc-nodate::before{background:#9ca3af;}
+.sum-card-label{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#9a9080;margin-bottom:8px;}
+.sum-card-count{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--ink);line-height:1;}
+.sum-card-sub{font-size:.72rem;color:#9a9080;margin-top:4px;}
+.sum-list{display:flex;flex-direction:column;gap:6px;}
+.sum-item{background:white;border:1.5px solid var(--border);border-radius:4px;padding:10px 14px;display:flex;align-items:center;gap:12px;transition:background .1s;}
+.sum-item:hover{background:var(--paper);}
+.sum-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sum-item-name{flex:1;font-size:.82rem;font-weight:500;}
+.sum-item-date{font-size:.75rem;color:#9a9080;}
+.sum-item-cat{font-size:.68rem;padding:2px 7px;border-radius:10px;background:var(--paper2);color:#6a6050;}
+.sum-item.overdue .sum-item-date{color:var(--accent);font-weight:500;}
+.sum-section-title{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#9a9080;margin:20px 0 8px;padding-left:2px;}
+@media(max-width:700px){.sum-grid{grid-template-columns:1fr 1fr;}}
+
+
+
+.done-section-header{margin-top:28px;margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.done-section-header .dsh-line{flex:1;height:1px;background:var(--border);}
+.done-section-header .dsh-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#9a9080;white-space:nowrap;padding:0 4px;}
+.done-section-header .dsh-arrow{font-size:.7rem;color:#9a9080;transition:transform .2s;}
+.done-section-header.open .dsh-arrow{transform:rotate(180deg);}
+tr.todo-done td{opacity:.5;text-decoration:line-through;}
+tr.todo-done .action-btn{text-decoration:none;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+/* PWA install banner */
+#pwa-install-bar{display:none;align-items:center;gap:10px;background:var(--ink);color:white;padding:12px 20px;border-radius:4px;margin-bottom:20px;font-size:.8rem;}
+#pwa-install-bar .pwa-msg{flex:1;}
+#pwa-install-bar .pwa-btn{background:var(--accent);color:white;border:none;padding:7px 16px;border-radius:3px;font-family:var(--mono);font-size:.75rem;cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;}
+#pwa-install-bar .pwa-close{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:1.1rem;padding:0 4px;line-height:1;}
+/* Firebase auth bar */
+#auth-bar{display:none;align-items:center;gap:10px;background:white;border:1.5px solid var(--border);border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:.78rem;}
+#auth-user-info{flex:1;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#auth-btn{background:var(--ink);color:white;border:none;padding:6px 14px;border-radius:3px;font-family:var(--mono);font-size:.72rem;cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;transition:background .15s;}
+#auth-btn:hover{background:#2d2d4e;}
+#sync-indicator{display:none;align-items:center;gap:5px;font-size:.7rem;color:var(--paid-accent);}
+#sync-indicator::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--paid-accent);animation:syncpulse 2s infinite;}
+@keyframes syncpulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Firebase setup banner */
+#fb-setup-banner{display:none;flex-direction:column;gap:10px;background:#fef9f0;border:1.5px solid #f0d080;border-radius:4px;padding:16px 20px;margin-bottom:20px;font-size:.8rem;line-height:1.7;}
+#fb-setup-banner strong{font-size:.85rem;color:var(--ink);}
+#fb-setup-banner code{background:var(--paper2);padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:.78rem;}
+#fb-setup-banner a{color:var(--accent);}
+#fb-config-form{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+#fb-config-input{border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.75rem;color:var(--ink);border-radius:3px;outline:none;resize:vertical;min-height:80px;}
+#fb-config-input:focus{border-color:var(--ink);}
+#fb-config-save{align-self:flex-end;background:var(--accent);color:white;border:none;padding:8px 20px;border-radius:3px;font-family:var(--mono);font-size:.75rem;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;}
+#fb-config-save:hover{background:#a83d28;}
+#fb-config-msg{font-size:.72rem;color:var(--paid-accent);display:none;}
+@media(max-width:400px){.app{padding:16px 10px 80px;}}
+@media(max-width:700px){
+  .stats{grid-template-columns:1fr 1fr;}
+  .form-grid,.form-grid-todo{grid-template-columns:1fr 1fr;}
+  .cat-panel-inner{grid-template-columns:1fr;}
+  .header h1{font-size:2rem;}
+  thead th,tbody td{padding:7px 8px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div id="pwa-install-bar">
+  <span class="pwa-msg">📲 Εγκαταστήστε την εφαρμογή για γρήγορη πρόσβαση από κινητό &amp; PC</span>
+  <button class="pwa-btn" id="pwa-install-btn">Εγκατάσταση</button>
+  <button class="pwa-close" id="pwa-dismiss-btn" title="Κλείσιμο">✕</button>
+</div>
+
+<!-- Firebase setup banner (hidden - config is built in) -->
+<div id="fb-setup-banner" style="display:none!important"></div>
+
+<!-- Auth bar (shown when Firebase is configured) -->
+<div id="auth-bar">
+  <span>☁️</span>
+  <span id="auth-user-info">Δεν έχετε συνδεθεί</span>
+  <span id="sync-indicator">Συγχρονισμός ενεργός</span>
+  <button id="auth-btn">🔗 Σύνδεση με Google</button>
+</div>
+
+<div class="header">
+  <h1>Διαχείριση <span>Πληρωμών</span></h1>
+  <p>Παρακολούθηση · Σήμανση ως πληρωμένο · Λίστα εργασιών</p>
+  <div id="save-indicator" class="save-indicator">● Αποθηκεύτηκε αυτόματα</div>
+</div>
+
+<div class="stats">
+  <div class="stat s-pay">
+    <div class="stat-label">Προς Πληρωμή</div>
+    <div class="stat-value" id="count-pending">0 εγγραφές</div>
+  </div>
+  <div class="stat s-paid">
+    <div class="stat-label">Πληρωμένα</div>
+    <div class="stat-value" id="count-paid">0 εγγραφές</div>
+  </div>
+  <div class="stat s-total">
+    <div class="stat-label">Σύνολο Οφειλής</div>
+    <div class="stat-value money" id="total-amount">0,00</div>
+  </div>
+  <div class="stat s-todo">
+    <div class="stat-label">Εκκρεμείς Εργασίες</div>
+    <div class="stat-value" id="count-todo">0 εργασίες</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active"   onclick="switchTab('pay')">  📋 Προς Πληρωμή  <span class="badge" id="badge-pay">0</span></button>
+  <button class="tab paid-tab" onclick="switchTab('paid')"> ✅ Πληρωμένα     <span class="badge" id="badge-paid">0</span></button>
+  <button class="tab cat-tab"  onclick="switchTab('cat')">  🏷 Κατηγορίες    <span class="badge" id="badge-cat">0</span></button>
+  <button class="tab todo-tab"  onclick="switchTab('todo')">  ☑ Εργασίες      <span class="badge" id="badge-todo">0</span></button>
+  <button class="tab shop-tab"  onclick="switchTab('shop')">  🛍 Ψώνια        <span class="badge" id="badge-shop">0</span></button>
+  <button class="tab sum-tab"   onclick="switchTab('sum')">   📊 Σύνολο        <span class="badge" id="badge-sum">0</span></button>
+
+</div>
+
+<!-- ΠΡΟΣ ΠΛΗΡΩΜΗ -->
+<div class="panel active" id="panel-pay">
+  <button class="btn btn-add" onclick="toggleForm()">+ Νέα Πληρωμή</button>
+  <div class="add-form" id="add-form">
+    <h3>Νέα Πληρωμή</h3>
+    <div class="form-grid">
+      <div class="form-field"><label>Περιγραφή *</label><input type="text" id="f-desc" placeholder="π.χ. Λογαριασμός ΔΕΗ"></div>
+      <div class="form-field"><label>Ποσό (€) *</label><input type="number" id="f-amount" placeholder="0,00" step="0.01" min="0"></div>
+      <div class="form-field"><label>Ημερομηνία</label><input type="date" id="f-due"></div>
+      <div class="form-field"><label>Κατηγορία</label><select id="f-cat"></select></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field"><label>Σημειώσεις</label><input type="text" id="f-notes" placeholder="Προαιρετικές σημειώσεις..."></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="toggleForm()">Ακύρωση</button>
+      <button class="btn btn-primary" onclick="addPayment()">Προσθήκη</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Σημειώσεις</th><th style="text-align:center">Ενέργεια</th></tr></thead>
+      <tbody id="tbody-pay"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ΠΛΗΡΩΜΕΝΑ -->
+<div class="panel" id="panel-paid">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Σημειώσεις</th><th>Πληρώθηκε</th><th style="text-align:center">Ενέργεια</th></tr></thead>
+      <tbody id="tbody-paid"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ΚΑΤΗΓΟΡΙΕΣ -->
+<div class="panel" id="panel-cat">
+  <div class="cat-info">
+    ✏️ <strong>Κλικ σε κατηγορία για μετονομασία.</strong> &nbsp;·&nbsp;
+    ✕ Διαγραφή (μόνο αν δεν χρησιμοποιείται). &nbsp;·&nbsp;
+    Οι αλλαγές ενημερώνουν αυτόματα το μενού επιλογής.
+  </div>
+  <div class="cat-panel-inner">
+    <div class="cat-section">
+      <div class="cat-section-head pay-head"><span class="dot"></span>Κατηγορίες Προς Πληρωμή</div>
+      <div class="cat-list" id="cat-list-pay"></div>
+      <div class="cat-add-row">
+        <input class="cat-add-input" type="text" id="cat-input-pay" placeholder="Νέα κατηγορία..." onkeydown="if(event.key==='Enter')addCategory('pay')">
+        <button class="cat-add-btn" onclick="addCategory('pay')">+ Προσθήκη</button>
+      </div>
+    </div>
+    <div class="cat-section">
+      <div class="cat-section-head paid-head"><span class="dot"></span>Κατηγορίες Πληρωμένων</div>
+      <div class="cat-list" id="cat-list-paid"></div>
+      <div class="cat-add-row">
+        <input class="cat-add-input" type="text" id="cat-input-paid" placeholder="Νέα κατηγορία..." onkeydown="if(event.key==='Enter')addCategory('paid')">
+        <button class="cat-add-btn" onclick="addCategory('paid')">+ Προσθήκη</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ΕΡΓΑΣΙΕΣ (TO DO) -->
+<div class="panel" id="panel-todo">
+  <button class="btn btn-todo-add" onclick="toggleTodoForm()">+ Νέα Εργασία</button>
+  <div class="add-form" id="todo-form">
+    <h3>Νέα Εργασία</h3>
+    <div class="form-grid-todo">
+      <div class="form-field"><label>Όνομα *</label><input type="text" id="t-name" placeholder="π.χ. Ανανέωση συμβολαίου"></div>
+      <div class="form-field"><label>Ημερομηνία</label><input type="date" id="t-date"></div>
+      <div class="form-field"><label>Κατηγορία</label><input type="text" id="t-cat" placeholder="π.χ. Δουλειά" list="todo-cat-list"><datalist id="todo-cat-list"></datalist></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field"><label>Πληροφορίες</label><textarea id="t-info" placeholder="Επιπλέον πληροφορίες..."></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="toggleTodoForm()">Ακύρωση</button>
+      <button class="btn btn-primary" onclick="addTodo()">Προσθήκη</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Πληροφορίες</th><th style="text-align:center">Κατάσταση</th><th style="text-align:center">🗑</th></tr></thead>
+      <tbody id="tbody-todo"></tbody>
+    </table>
+  </div>
+  <div id="done-section"></div>
+</div>
+
+<!-- ΨΩΝΙΑ -->
+<div class="panel" id="panel-shop">
+  <button class="btn" style="background:#8b4513;color:white;margin-bottom:16px;" onclick="toggleShopForm()">+ Νέο Ψώνι</button>
+  <div class="add-form" id="shop-form">
+    <h3>Νέο Ψώνι — Πράγμα που πλήρωσα &amp; θέλω να πάρω πίσω</h3>
+    <div class="form-grid">
+      <div class="form-field"><label>Περιγραφή *</label><input type="text" id="sh-desc" placeholder="π.χ. Επιστροφή από κατάστημα"></div>
+      <div class="form-field"><label>Ποσό (€) *</label><input type="number" id="sh-amount" placeholder="0,00" step="0.01" min="0"></div>
+      <div class="form-field"><label>Ημερομηνία</label><input type="date" id="sh-date"></div>
+      <div class="form-field"><label>Κατηγορία</label><input type="text" id="sh-cat" placeholder="π.χ. Ηλεκτρονικά"></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field"><label>Σημειώσεις</label><input type="text" id="sh-notes" placeholder="Προαιρετικές σημειώσεις..."></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="toggleShopForm()">Ακύρωση</button>
+      <button class="btn btn-primary" onclick="addShop()">Προσθήκη</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Σημειώσεις</th><th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th></tr></thead>
+      <tbody id="tbody-shop"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ΣΥΝΟΛΟ -->
+<div class="panel" id="panel-sum">
+  <div id="sum-content"></div>
+</div>
+
+
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY_PENDING='pt_pending', KEY_PAID='pt_paid', KEY_NEXTID='pt_nextid';
+const KEY_CATS_PAY='pt_cats_pay', KEY_CATS_PAID='pt_cats_paid';
+const KEY_TODOS='pt_todos', KEY_TODO_ID='pt_todo_id';
+const KEY_SHOPS='pt_shops', KEY_SHOP_ID='pt_shop_id';
+const DEFAULT_CATS=["Κοινόχρηστα","Ενοίκιο","Ασφάλεια","Υγεία","Ψυχαγωγία","Μεταφορές","Φαγητό","Εκπαίδευση","Άλλο"];
+const DEFAULT_PENDING=[
+  {id:1,desc:"Λογαριασμός ΔΕΗ",   amount:85.50, due:"2025-04-15",cat:"Κοινόχρηστα",notes:"Απρίλιος"},
+  {id:2,desc:"Ίντερνετ",           amount:35.00, due:"2025-04-20",cat:"Κοινόχρηστα",notes:"Cosmote"},
+  {id:3,desc:"Ενοίκιο",            amount:750.00,due:"2025-04-01",cat:"Ενοίκιο",    notes:""},
+  {id:4,desc:"Γυμναστήριο",        amount:30.00, due:"2025-04-10",cat:"Υγεία",      notes:"Μηνιαία"},
+  {id:5,desc:"Ασφάλεια Αυτ/του",   amount:210.00,due:"2025-04-25",cat:"Ασφάλεια",  notes:"6μηνη"},
+  {id:6,desc:"Κινητό",             amount:22.00, due:"2025-04-18",cat:"Κοινόχρηστα",notes:""},
+  {id:7,desc:"Streaming",          amount:9.99,  due:"2025-04-05",cat:"Ψυχαγωγία", notes:"Netflix"},
+];
+
+let pending=[],paid=[],nextId=8,catsPay=[],catsPaid=[],todos=[],nextTodoId=1;
+let shops=[],nextShopId=1;
+let todoFilter='all';
+
+
+function getStateObj(){
+  return {
+    pending, paid, nextId,
+    catsPay, catsPaid,
+    todos, nextTodoId,
+    shops, nextShopId
+  };
+}
+window.__getStateObj = getStateObj;
+
+function applyStateObj(d){
+  try{
+    if(d.pending   !== undefined) pending    = d.pending;
+    if(d.paid      !== undefined) paid       = d.paid;
+    if(d.nextId    !== undefined) nextId     = d.nextId;
+    if(d.catsPay   !== undefined) catsPay    = d.catsPay;
+    if(d.catsPaid  !== undefined) catsPaid   = d.catsPaid;
+    if(d.todos     !== undefined) todos      = d.todos;
+    if(d.nextTodoId!== undefined) nextTodoId = d.nextTodoId;
+    if(d.shops     !== undefined) shops      = d.shops;
+    if(d.nextShopId!== undefined) nextShopId = d.nextShopId;
+    // Also mirror to localStorage for offline use
+    localStorage.setItem(KEY_PENDING, JSON.stringify(pending));
+    localStorage.setItem(KEY_PAID,    JSON.stringify(paid));
+    localStorage.setItem(KEY_NEXTID,  String(nextId));
+    localStorage.setItem(KEY_CATS_PAY,  JSON.stringify(catsPay));
+    localStorage.setItem(KEY_CATS_PAID, JSON.stringify(catsPaid));
+    localStorage.setItem(KEY_TODOS,     JSON.stringify(todos));
+    localStorage.setItem(KEY_TODO_ID,   String(nextTodoId));
+    localStorage.setItem(KEY_SHOPS,     JSON.stringify(shops));
+    localStorage.setItem(KEY_SHOP_ID,   String(nextShopId));
+    render();
+    const el = document.getElementById('save-indicator');
+    if(el){el.textContent='☁️ Συγχρονίστηκε';el.classList.add('show');clearTimeout(applyStateObj._t);applyStateObj._t=setTimeout(()=>{el.classList.remove('show');el.textContent='● Αποθηκεύτηκε αυτόματα';},2500);}
+  }catch(e){ console.warn('applyStateObj error', e); }
+}
+window.__applyRemoteState = applyStateObj;
+
+function saveFbConfig(){
+  const raw = document.getElementById('fb-config-input').value.trim();
+  try {
+    // Accept both raw JSON object and const firebaseConfig = {...}; forms
+    const jsonStr = raw.replace(/^[\s\S]*?(\{[\s\S]*\})[\s\S]*$/, '$1');
+    JSON.parse(jsonStr); // validate
+    localStorage.setItem('__firebase_config', jsonStr);
+    document.getElementById('fb-config-msg').style.display = 'block';
+    setTimeout(() => location.reload(), 1200);
+  } catch(e) {
+    alert('Μη έγκυρο JSON. Βεβαιωθείτε ότι αντιγράψατε σωστά το firebaseConfig object.');
+  }
+}
+
+// Inject saved config into window before Firebase module reads it
+const _savedCfg = localStorage.getItem('__firebase_config');
+if (_savedCfg) { try { window.__FIREBASE_CONFIG__ = JSON.parse(_savedCfg); } catch(e){} }
+
+function loadState(){
+  try{
+    const sp=localStorage.getItem(KEY_PENDING);
+    if(sp===null){
+      pending=DEFAULT_PENDING;paid=[];nextId=8;
+      catsPay=[...DEFAULT_CATS];catsPaid=[...DEFAULT_CATS];
+      todos=[];nextTodoId=1;
+      saveState();
+    }else{
+      pending=JSON.parse(sp);
+      paid=JSON.parse(localStorage.getItem(KEY_PAID)||'[]');
+      nextId=parseInt(localStorage.getItem(KEY_NEXTID)||'8');
+      catsPay=JSON.parse(localStorage.getItem(KEY_CATS_PAY)||JSON.stringify(DEFAULT_CATS));
+      catsPaid=JSON.parse(localStorage.getItem(KEY_CATS_PAID)||JSON.stringify(DEFAULT_CATS));
+      todos=JSON.parse(localStorage.getItem(KEY_TODOS)||'[]');
+      nextTodoId=parseInt(localStorage.getItem(KEY_TODO_ID)||'1');
+      shops=JSON.parse(localStorage.getItem(KEY_SHOPS)||'[]');
+      nextShopId=parseInt(localStorage.getItem(KEY_SHOP_ID)||'1');
+    }
+  }catch(e){
+    pending=DEFAULT_PENDING;paid=[];nextId=8;
+    catsPay=[...DEFAULT_CATS];catsPaid=[...DEFAULT_CATS];
+    todos=[];nextTodoId=1;
+    shops=[];nextShopId=1;
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(KEY_PENDING,JSON.stringify(pending));
+    localStorage.setItem(KEY_PAID,JSON.stringify(paid));
+    localStorage.setItem(KEY_NEXTID,String(nextId));
+    localStorage.setItem(KEY_CATS_PAY,JSON.stringify(catsPay));
+    localStorage.setItem(KEY_CATS_PAID,JSON.stringify(catsPaid));
+    localStorage.setItem(KEY_TODOS,JSON.stringify(todos));
+    localStorage.setItem(KEY_TODO_ID,String(nextTodoId));
+    localStorage.setItem(KEY_SHOPS,JSON.stringify(shops));
+    localStorage.setItem(KEY_SHOP_ID,String(nextShopId));
+    // Push to Firebase if signed in
+    if(window.__fbSave && window.__fbReady) window.__fbSave(getStateObj());
+    const el=document.getElementById('save-indicator');
+    if(el){el.classList.add('show');clearTimeout(saveState._t);saveState._t=setTimeout(()=>el.classList.remove('show'),2000);}
+  }catch(e){}
+}
+
+function fmt(n){return new Intl.NumberFormat('el-GR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function duePill(d){
+  if(!d)return'<span class="due-chip">—</span>';
+  const due=new Date(d),now=new Date();now.setHours(0,0,0,0);
+  const diff=Math.ceil((due-now)/86400000);
+  const lbl=due.toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(diff<0)return`<span class="due-chip overdue">⚠ ${lbl}</span>`;
+  if(diff<=5)return`<span class="due-chip soon">⏰ ${lbl}</span>`;
+  return`<span class="due-chip ok">${lbl}</span>`;
+}
+
+function render(){
+  // Stats
+  const total=pending.reduce((s,i)=>s+i.amount,0);
+  const openTodos=todos.filter(t=>!t.done);
+  document.getElementById('count-pending').textContent=pending.length+(pending.length===1?' εγγραφή':' εγγραφές');
+  document.getElementById('count-paid').textContent=paid.length+(paid.length===1?' εγγραφή':' εγγραφές');
+  document.getElementById('total-amount').textContent=fmt(total);
+  document.getElementById('count-todo').textContent=openTodos.length+(openTodos.length===1?' εκκρεμής':' εκκρεμείς');
+  document.getElementById('badge-pay').textContent=pending.length;
+  document.getElementById('badge-paid').textContent=paid.length;
+  document.getElementById('badge-cat').textContent=catsPay.length;
+  document.getElementById('badge-todo').textContent=todos.length;
+  document.getElementById('badge-shop').textContent=shops.length;
+  document.getElementById('badge-sum').textContent=todos.filter(t=>!t.done).length;
+
+  // Payment dropdown
+  const sel=document.getElementById('f-cat'),cur=sel.value;
+  sel.innerHTML=catsPay.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(catsPay.includes(cur))sel.value=cur;
+
+  // Todo category datalist
+  const usedTodoCats=[...new Set(todos.map(t=>t.cat).filter(Boolean))];
+  document.getElementById('todo-cat-list').innerHTML=usedTodoCats.map(c=>`<option value="${esc(c)}">`).join('');
+
+  // To Pay
+  const tb1=document.getElementById('tbody-pay');
+  if(!pending.length){
+    tb1.innerHTML=`<tr><td colspan="7"><div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμείς πληρωμές!</p></div></td></tr>`;
+  }else{
+    tb1.innerHTML=pending.map((item,i)=>`
+      <tr>
+        <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
+        <td><strong>${esc(item.desc)}</strong></td>
+        <td class="amount">€ ${fmt(item.amount)}</td>
+        <td>${duePill(item.due)}</td>
+        <td class="category"><span>${esc(item.cat||'—')}</span></td>
+        <td style="color:#9a9080;font-size:.78rem">${esc(item.notes||'—')}</td>
+        <td><div class="action-cell">
+          <button class="action-btn pay-btn" onclick="markPaid(${item.id})">✅ Πληρώθηκε</button>
+          <button class="action-btn del-btn" onclick="deletePending(${item.id})">🗑 Διαγραφή</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  // Paid
+  const tb2=document.getElementById('tbody-paid');
+  if(!paid.length){
+    tb2.innerHTML=`<tr><td colspan="8"><div class="empty-state"><span class="icon">📭</span><p>Δεν υπάρχουν πληρωμένα ακόμα.</p></div></td></tr>`;
+  }else{
+    tb2.innerHTML=paid.map((item,i)=>`
+      <tr>
+        <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
+        <td><strong>${esc(item.desc)}</strong></td>
+        <td class="amount" style="color:var(--paid-accent)">€ ${fmt(item.amount)}</td>
+        <td>${duePill(item.due)}</td>
+        <td class="category"><span>${esc(item.cat||'—')}</span></td>
+        <td style="color:#9a9080;font-size:.78rem">${esc(item.notes||'—')}</td>
+        <td class="paid-date">✓ ${new Date(item.paidAt).toLocaleDateString('el-GR')}</td>
+        <td><div class="action-cell">
+          ${item.shopRef!=null
+            ? `<button class="action-btn shop-btn" onclick="moveBackToShop(${item.id})">↩ Ψώνια</button>`
+            : `<button class="action-btn back-btn" onclick="moveBack(${item.id})">↩ Αναίρεση</button>`
+          }
+          <button class="action-btn del-btn" onclick="deletePaid(${item.id})">🗑 Διαγραφή</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  // Categories
+  const usedPay={},usedPaid={};
+  pending.forEach(i=>usedPay[i.cat]=(usedPay[i.cat]||0)+1);
+  paid.forEach(i=>usedPaid[i.cat]=(usedPaid[i.cat]||0)+1);
+  function buildCatList(listId,cats,usedMap,type){
+    const el=document.getElementById(listId);
+    if(!cats.length){el.innerHTML=`<div style="color:#9a9080;font-size:.78rem;font-style:italic;padding:8px 4px;">Δεν υπάρχουν κατηγορίες ακόμα.</div>`;return;}
+    el.innerHTML=cats.map((cat,idx)=>{
+      const count=usedMap[cat]||0;
+      return`<div class="cat-item">
+        <input class="cat-name-input" type="text" value="${esc(cat)}" title="Κλικ για μετονομασία"
+          onblur="renameCategory('${type}',${idx},this.value)" onkeydown="if(event.key==='Enter')this.blur()">
+        ${count>0?`<span class="cat-count">${count} εγγρ.</span>`:''}
+        <button class="cat-del" onclick="deleteCategory('${type}',${idx})"
+          ${count>0?'disabled title="Χρησιμοποιείται"':'title="Διαγραφή"'}>✕</button>
+      </div>`;
+    }).join('');
+  }
+  buildCatList('cat-list-pay',catsPay,usedPay,'pay');
+  buildCatList('cat-list-paid',catsPaid,usedPaid,'paid');
+
+  // ── Ψώνια ────────────────────────────────────────────────────────────────────
+  const tbs=document.getElementById('tbody-shop');
+  if(!shops.length){
+    tbs.innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">🛍</span><p>Δεν υπάρχουν καταγεγραμμένα ψώνια.<br>Προσθέστε πράγματα που πληρώσατε και περιμένετε επιστροφή.</p></div></td></tr>`;
+  }else{
+    const sortedShops=[...shops].sort((a,b)=>{
+      if(!a.date&&!b.date)return 0; if(!a.date)return -1; if(!b.date)return 1;
+      return a.date.localeCompare(b.date);
+    });
+    tbs.innerHTML=sortedShops.map((s,i)=>`
+      <tr>
+        <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
+        <td><strong>${esc(s.desc)}</strong></td>
+        <td class="amount" style="color:#8b4513">€ ${fmt(s.amount)}</td>
+        <td>${s.date?new Date(s.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
+        <td class="category"><span>${esc(s.cat||'—')}</span></td>
+        <td style="color:#9a9080;font-size:.78rem">${esc(s.notes||'—')}</td>
+        <td><div class="action-cell">
+          <button class="action-btn pay-btn" onclick="markShopPaid(${s.id})">✅ Πληρωμένα</button>
+          <button class="action-btn del-btn" onclick="deleteShop(${s.id})">🗑 Διαγραφή</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  // ── Σύνολο ───────────────────────────────────────────────────────────────────
+  const sumContent=document.getElementById('sum-content');
+  if(sumContent){
+    const nowS=new Date(); nowS.setHours(0,0,0,0);
+    const tomS=new Date(nowS); tomS.setDate(tomS.getDate()+1);
+    const endWeekS=new Date(nowS); endWeekS.setDate(endWeekS.getDate()+(7-nowS.getDay())%7||7);
+    const endMonthS=new Date(nowS.getFullYear(),nowS.getMonth()+1,0); endMonthS.setHours(23,59,59,999);
+
+    // Combine all three sources into unified items
+    // type: 'todo' | 'pay' | 'shop'
+    const allItems=[
+      ...todos.filter(t=>!t.done).map(t=>({
+        id:t.id, type:'todo',
+        name:t.name, date:t.date||'', cat:t.cat||'', info:t.info||'',
+        amount:null
+      })),
+      ...pending.map(p=>({
+        id:p.id, type:'pay',
+        name:p.desc, date:p.due||'', cat:p.cat||'', info:p.notes||'',
+        amount:p.amount
+      })),
+      ...shops.map(s=>({
+        id:s.id, type:'shop',
+        name:s.desc, date:s.date||'', cat:s.cat||'', info:s.notes||'',
+        amount:s.amount
+      })),
+    ];
+
+    function getGroup(item){
+      const d=item.date;
+      if(!d) return 'nodate';
+      const dd=new Date(d);
+      if(dd<nowS) return 'past';
+      if(dd.toDateString()===nowS.toDateString()) return 'today';
+      if(dd.toDateString()===tomS.toDateString()) return 'tomorrow';
+      if(dd<=endWeekS) return 'week';
+      if(dd<=endMonthS) return 'month';
+      return 'later';
+    }
+
+    const groups={nodate:[],past:[],today:[],tomorrow:[],week:[],month:[],later:[]};
+    allItems.forEach(item=>groups[getGroup(item)].push(item));
+
+    // Count cards: all combined items
+    const totalItems=allItems.length;
+    const cards=[
+      {key:'past',    label:'Παλιά',             color:'sc-past',     icon:'⚠'},
+      {key:'nodate',  label:'Χωρίς ημερομηνία',  color:'sc-nodate',   icon:'○'},
+      {key:'today',   label:'Σήμερα',             color:'sc-today',    icon:'📌'},
+      {key:'tomorrow',label:'Αύριο',              color:'sc-tomorrow', icon:'⏰'},
+      {key:'week',    label:'Υπόλοιπη εβδομάδα', color:'sc-week',     icon:'📅'},
+      {key:'month',   label:'Υπόλοιπος μήνας',   color:'sc-month',    icon:'🗓'},
+    ];
+    const cardHtml=cards.map(c=>`
+      <div class="sum-card ${c.color}">
+        <div class="sum-card-label">${c.icon} ${c.label}</div>
+        <div class="sum-card-count">${groups[c.key].length}</div>
+        <div class="sum-card-sub">αντικείμενα</div>
+      </div>`).join('');
+
+    // Type badge helper
+    function typeBadge(type){
+      if(type==='todo') return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#e0f2fe;color:#0369a1;margin-right:2px">☑ Εργασία</span>';
+      if(type==='pay')  return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#fef3c7;color:#92400e;margin-right:2px">💳 Πληρωμή</span>';
+      if(type==='shop') return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#fce7f3;color:#9d174d;margin-right:2px">🛍 Ψώνι</span>';
+      return'';
+    }
+
+    // Action button per type
+    function typeAction(item){
+      if(item.type==='todo') return`<button class="action-btn done-btn" style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="toggleTodo(${item.id})">✔</button>`;
+      if(item.type==='pay')  return`<button class="action-btn pay-btn"  style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="markPaid(${item.id})">✅</button>`;
+      if(item.type==='shop') return`<button class="action-btn shop-btn" style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="undoShop(${item.id})">↩</button>`;
+      return'';
+    }
+
+    function renderItems(items){
+      // Sort: no-date first, then chronological
+      const sorted=[...items].sort((a,b)=>{
+        if(!a.date&&!b.date)return 0; if(!a.date)return -1; if(!b.date)return 1;
+        return a.date.localeCompare(b.date);
+      });
+      return sorted.map(item=>{
+        const overdue=item.date&&new Date(item.date)<nowS;
+        const dateLbl=item.date?new Date(item.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+        const dotColor=item.type==='pay'?'var(--accent)':item.type==='shop'?'#8b4513':overdue?'var(--accent)':!item.date?'#9ca3af':'var(--todo-accent)';
+        const amtHtml=item.amount!=null?`<span style="font-family:var(--serif);font-size:.82rem;font-weight:600;color:#374151;margin-left:4px">€${fmt(item.amount)}</span>`:'';
+        return`<div class="sum-item${overdue?' overdue':''}">
+          <div class="sum-item-dot" style="background:${dotColor}"></div>
+          ${typeBadge(item.type)}
+          <div class="sum-item-name">${esc(item.name)}${amtHtml}</div>
+          ${item.cat?`<span class="sum-item-cat">${esc(item.cat)}</span>`:''}
+          <div class="sum-item-date">${dateLbl}</div>
+          ${typeAction(item)}
+        </div>`;
+      }).join('');
+    }
+
+    const sectionOrder=[
+      {key:'past',    title:'⚠ Παλιά (εκπρόθεσμα)'},
+      {key:'nodate',  title:'○ Χωρίς ημερομηνία'},
+      {key:'today',   title:'📌 Σήμερα'},
+      {key:'tomorrow',title:'⏰ Αύριο'},
+      {key:'week',    title:'📅 Υπόλοιπη εβδομάδα'},
+      {key:'month',   title:'🗓 Υπόλοιπος μήνας'},
+      {key:'later',   title:'📆 Αργότερα'},
+    ];
+    let listHtml='';
+    sectionOrder.forEach(sec=>{
+      const items=groups[sec.key];
+      if(!items.length)return;
+      listHtml+=`<div class="sum-section-title">${sec.title} (${items.length})</div>`;
+      listHtml+=`<div class="sum-list">${renderItems(items)}</div>`;
+    });
+    if(!allItems.length) listHtml=`<div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμή αντικείμενα!</p></div>`;
+
+    sumContent.innerHTML=`<div class="sum-grid">${cardHtml}</div>${listHtml}`;
+  }
+
+
+  // To Do — filter counts
+  const now2=new Date(); now2.setHours(0,0,0,0);
+  const tom=new Date(now2); tom.setDate(tom.getDate()+1);
+  const endWeek=new Date(now2); endWeek.setDate(endWeek.getDate()+(6-now2.getDay())+1);
+  const endMonth=new Date(now2.getFullYear(),now2.getMonth()+1,0);
+  endMonth.setHours(23,59,59,999);
+
+  function tdDate(t){return t.date?new Date(t.date):null;}
+  // Only count non-done for filters (except 'all' which shows all non-done)
+  const openTodos2=todos.filter(t=>!t.done);
+  const counts={
+    all:   openTodos2.length,
+    nodate:openTodos2.filter(t=>!t.date).length,
+    past:  openTodos2.filter(t=>t.date&&new Date(t.date)<now2).length,
+    today: openTodos2.filter(t=>t.date&&new Date(t.date).toDateString()===now2.toDateString()).length,
+    tomorrow:openTodos2.filter(t=>t.date&&new Date(t.date).toDateString()===tom.toDateString()).length,
+    week:  openTodos2.filter(t=>t.date&&new Date(t.date)>=now2&&new Date(t.date)<endWeek).length,
+    month: openTodos2.filter(t=>t.date&&new Date(t.date)>=now2&&new Date(t.date)<=endMonth).length,
+  };
+  ['all','nodate','past','today','tomorrow','week','month'].forEach(k=>{
+    const el=document.getElementById('fc-'+k);
+    if(el)el.textContent=counts[k];
+    const btn=document.getElementById('tf-'+k);
+    if(btn)btn.classList.toggle('active',todoFilter===k);
+  });
+
+  // Filter and sort todos
+  // "Όλα" = all non-done, sorted: no-date first, then chronological
+  // other filters = only matching non-done items, same sort
+  let filtered;
+  if(todoFilter==='all'){
+    filtered=openTodos2;
+  }else if(todoFilter==='nodate'){
+    filtered=openTodos2.filter(t=>!t.date);
+  }else if(todoFilter==='past'){
+    filtered=openTodos2.filter(t=>t.date&&new Date(t.date)<now2);
+  }else if(todoFilter==='today'){
+    filtered=openTodos2.filter(t=>t.date&&new Date(t.date).toDateString()===now2.toDateString());
+  }else if(todoFilter==='tomorrow'){
+    filtered=openTodos2.filter(t=>t.date&&new Date(t.date).toDateString()===tom.toDateString());
+  }else if(todoFilter==='week'){
+    filtered=openTodos2.filter(t=>t.date&&new Date(t.date)>=now2&&new Date(t.date)<endWeek);
+  }else if(todoFilter==='month'){
+    filtered=openTodos2.filter(t=>t.date&&new Date(t.date)>=now2&&new Date(t.date)<=endMonth);
+  }
+
+  // Sort: no-date first, then by date ascending
+  filtered=[...filtered].sort((a,b)=>{
+    if(!a.date&&!b.date)return 0;
+    if(!a.date)return -1;
+    if(!b.date)return 1;
+    return a.date.localeCompare(b.date);
+  });
+
+  const tbt=document.getElementById('tbody-todo');
+  if(!filtered.length){
+    const emptyMsg=!todos.length
+      ?'Δεν υπάρχουν εγγεγραμμένες εργασίες.<br>Πατήστε "+ Νέα Εργασία" για να ξεκινήσετε.'
+      :'Δεν υπάρχουν εργασίες για αυτό το φίλτρο.';
+    tbt.innerHTML=`<tr><td colspan="7"><div class="empty-state"><span class="icon">☑</span><p>${emptyMsg}</p></div></td></tr>`;
+  }else{
+    tbt.innerHTML=filtered.map((t,i)=>{
+      const overdue=t.date&&new Date(t.date)<now2;
+      const dateLbl=t.date?new Date(t.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+      return`<tr>
+        <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
+        <td><strong>${esc(t.name)}</strong></td>
+        <td style="${overdue?'color:var(--accent);font-weight:500':''}">${overdue?'⚠ ':''}${dateLbl}</td>
+        <td class="category"><span>${esc(t.cat||'—')}</span></td>
+        <td style="color:#9a9080;font-size:.78rem;white-space:pre-wrap;max-width:200px">${esc(t.info||'—')}</td>
+        <td><button class="action-btn done-btn" onclick="toggleTodo(${t.id})">✔ Ολοκληρώθηκε</button></td>
+        <td><button class="action-btn del-btn" onclick="deleteTodo(${t.id})">🗑</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Ολοκληρωμένες εργασίες ────────────────────────────────────────────────
+  const doneTodos=todos.filter(t=>t.done).sort((a,b)=>{
+    // Sort by completion date, most recent first
+    return(b.doneAt||'').localeCompare(a.doneAt||'');
+  });
+  const doneSection=document.getElementById('done-section');
+  if(doneSection){
+    if(!doneTodos.length){
+      doneSection.innerHTML='';
+    }else{
+      const isOpen=doneSection.dataset.open!=='false';
+      doneSection.innerHTML=`
+        <div class="done-section-header ${isOpen?'open':''}" onclick="toggleDoneSection()">
+          <div class="dsh-line"></div>
+          <div class="dsh-label">✔ Ολοκληρωμένες (${doneTodos.length})</div>
+          <div class="dsh-arrow">▼</div>
+          <div class="dsh-line"></div>
+        </div>
+        <div id="done-list" style="display:${isOpen?'block':'none'}">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th>
+                <th>Πληροφορίες</th><th style="text-align:center">Ολοκληρώθηκε</th>
+                <th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th>
+              </tr></thead>
+              <tbody>${doneTodos.map((t,i)=>{
+                const dateLbl=t.date?new Date(t.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+                const doneLbl=t.doneAt?new Date(t.doneAt).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+                return`<tr class="todo-done">
+                  <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
+                  <td><strong>${esc(t.name)}</strong></td>
+                  <td>${dateLbl}</td>
+                  <td class="category"><span>${esc(t.cat||'—')}</span></td>
+                  <td style="color:#9a9080;font-size:.78rem">${esc(t.info||'—')}</td>
+                  <td class="paid-date">✓ ${doneLbl}</td>
+                  <td><button class="action-btn undone-btn" onclick="toggleTodo(${t.id})" style="text-decoration:none">↩ Αναίρεση</button></td>
+                  <td><button class="action-btn del-btn" onclick="deleteTodo(${t.id})" style="text-decoration:none">🗑</button></td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+  }
+}
+
+// ── Κατηγορίες ───────────────────────────────────────────────────────────────
+function addCategory(type){
+  const input=document.getElementById(`cat-input-${type}`);
+  const name=input.value.trim();
+  if(!name){input.style.borderColor='var(--cat-accent)';setTimeout(()=>input.style.borderColor='',600);return;}
+  const list=type==='pay'?catsPay:catsPaid;
+  if(list.some(c=>c.toLowerCase()===name.toLowerCase())){toast(`"${name}" υπάρχει ήδη`,'purple');return;}
+  list.push(name);input.value='';saveState();render();
+  toast(`"${name}" προστέθηκε 🏷`,'purple');
+}
+function deleteCategory(type,idx){
+  const list=type==='pay'?catsPay:catsPaid;
+  const inUse=type==='pay'?pending.some(i=>i.cat===list[idx]):paid.some(i=>i.cat===list[idx]);
+  if(inUse){toast('Η κατηγορία χρησιμοποιείται — δεν μπορεί να διαγραφεί','');return;}
+  const name=list.splice(idx,1)[0];saveState();render();
+  toast(`"${name}" διαγράφηκε`,'');
+}
+function renameCategory(type,idx,newName){
+  newName=newName.trim();
+  const list=type==='pay'?catsPay:catsPaid;
+  const old=list[idx];
+  if(!newName||newName===old){render();return;}
+  if(list.some((c,i)=>i!==idx&&c.toLowerCase()===newName.toLowerCase())){toast(`"${newName}" υπάρχει ήδη`,'purple');render();return;}
+  if(type==='pay')pending.forEach(i=>{if(i.cat===old)i.cat=newName;});
+  if(type==='paid')paid.forEach(i=>{if(i.cat===old)i.cat=newName;});
+  list[idx]=newName;saveState();render();
+  toast(`Μετονομάστηκε σε "${newName}" ✓`,'purple');
+}
+
+// ── Πληρωμές ─────────────────────────────────────────────────────────────────
+function markPaid(id){
+  const idx=pending.findIndex(i=>i.id===id);if(idx===-1)return;
+  const item={...pending[idx],paidAt:new Date().toISOString()};
+  if(!catsPaid.includes(item.cat))catsPaid.push(item.cat);
+  paid.unshift(item);pending.splice(idx,1);saveState();render();
+  toast(`"${item.desc}" μεταφέρθηκε στα Πληρωμένα ✅`,'green');
+}
+function moveBack(id){
+  const idx=paid.findIndex(i=>i.id===id);if(idx===-1)return;
+  const item={...paid[idx]};delete item.paidAt;
+  if(!catsPay.includes(item.cat))catsPay.push(item.cat);
+  pending.push(item);paid.splice(idx,1);saveState();render();
+  toast(`"${item.desc}" επέστρεψε στις Προς Πληρωμή ↩`,'red');
+}
+
+function moveBackToShop(id){
+  const idx=paid.findIndex(i=>i.id===id);if(idx===-1)return;
+  const item=paid[idx];
+  // Return to Ψώνια
+  shops.push({
+    id:nextShopId++, desc:item.desc, amount:item.amount,
+    date:item.due||'', cat:item.cat, notes:item.notes||'',
+    origin:'shop', createdAt:item.paidAt||new Date().toISOString()
+  });
+  paid.splice(idx,1);
+  saveState();render();
+  switchTab('shop');
+  toast(`"${item.desc}" επέστρεψε στα Ψώνια ↩`,'red');
+}
+function deletePending(id){
+  const idx=pending.findIndex(i=>i.id===id);if(idx===-1)return;
+  const desc=pending[idx].desc;
+  if(!confirm('⚠️ Οριστική διαγραφή:\n"'+desc+'"\n\nΔεν μπορεί να αναιρεθεί!'))return;
+  pending.splice(idx,1);saveState();render();
+  toast('"'+desc+'" διαγράφηκε 🗑','del');
+}
+function deletePaid(id){
+  const idx=paid.findIndex(i=>i.id===id);if(idx===-1)return;
+  const desc=paid[idx].desc;
+  if(!confirm('⚠️ Οριστική διαγραφή:\n"'+desc+'"\n\nΔεν μπορεί να αναιρεθεί!'))return;
+  paid.splice(idx,1);saveState();render();
+  toast('"'+desc+'" διαγράφηκε 🗑','del');
+}
+function addPayment(){
+  const desc=document.getElementById('f-desc').value.trim();
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const due=document.getElementById('f-due').value;
+  const cat=document.getElementById('f-cat').value;
+  const notes=document.getElementById('f-notes').value.trim();
+  if(!desc){shake('f-desc');return;}
+  if(!amount||amount<=0){shake('f-amount');return;}
+  pending.push({id:nextId++,desc,amount,due,cat,notes});
+  saveState();render();toggleForm();clearPayForm();
+  toast(`"${desc}" προστέθηκε 📋`,'');
+}
+
+// ── Εργασίες (To Do) ─────────────────────────────────────────────────────────
+let todoFormOpen=false;
+function toggleTodoForm(){
+  todoFormOpen=!todoFormOpen;
+  document.getElementById('todo-form').classList.toggle('open',todoFormOpen);
+  if(todoFormOpen)setTimeout(()=>document.getElementById('t-name').focus(),50);
+}
+function addTodo(){
+  const name=document.getElementById('t-name').value.trim();
+  const date=document.getElementById('t-date').value;
+  const cat=document.getElementById('t-cat').value.trim();
+  const info=document.getElementById('t-info').value.trim();
+  if(!name){shake('t-name');return;}
+  todos.push({id:nextTodoId++,name,date,cat,info,done:false,createdAt:new Date().toISOString()});
+  saveState();render();toggleTodoForm();
+  ['t-name','t-date','t-cat','t-info'].forEach(id=>document.getElementById(id).value='');
+  toast(`"${name}" προστέθηκε ☑`,'todo');
+}
+function toggleTodo(id){
+  const t=todos.find(t=>t.id===id);if(!t)return;
+  t.done=!t.done;
+  if(t.done)t.doneAt=new Date().toISOString();else delete t.doneAt;
+  saveState();render();
+  toast(t.done?'"'+t.name+'" ολοκληρώθηκε ✔':'"'+t.name+'" επαναφέρθηκε ↩',t.done?'todo':'red');
+}
+function deleteTodo(id){
+  const t=todos.find(t=>t.id===id);if(!t)return;
+  if(!confirm('⚠️ Οριστική διαγραφή:\n"'+t.name+'"\n\nΔεν μπορεί να αναιρεθεί!'))return;
+  todos=todos.filter(x=>x.id!==id);saveState();render();
+  toast('"'+t.name+'" διαγράφηκε 🗑','del');
+}
+
+
+// ── Ψώνια ─────────────────────────────────────────────────────────────────────
+let shopFormOpen=false;
+function toggleShopForm(){
+  shopFormOpen=!shopFormOpen;
+  document.getElementById('shop-form').classList.toggle('open',shopFormOpen);
+  if(shopFormOpen)setTimeout(()=>document.getElementById('sh-desc').focus(),50);
+}
+function addShop(){
+  const desc=document.getElementById('sh-desc').value.trim();
+  const amount=parseFloat(document.getElementById('sh-amount').value);
+  const date=document.getElementById('sh-date').value;
+  const cat=document.getElementById('sh-cat').value.trim();
+  const notes=document.getElementById('sh-notes').value.trim();
+  if(!desc){shake('sh-desc');return;}
+  if(!amount||amount<=0){shake('sh-amount');return;}
+  // Always origin='shop' — item goes to Πληρωμένα, undo returns to Ψώνια
+  shops.push({id:nextShopId++,desc,amount,date,cat,notes,origin:'shop',createdAt:new Date().toISOString()});
+  saveState();render();toggleShopForm();
+  ['sh-desc','sh-amount','sh-date','sh-cat','sh-notes'].forEach(id=>document.getElementById(id).value='');
+  toast(`"${desc}" προστέθηκε στα ψώνια 🛍`,'');
+}
+function undoShop(id){
+  const s=shops.find(s=>s.id===id);if(!s)return;
+  const originLabel=s.origin==='pay'?'Προς Πληρωμή':s.origin==='paid'?'Πληρωμένα':'—';
+  if(!confirm('Αναίρεση "'+s.desc+'"\nΘα επιστραφεί στην καρτέλα: '+originLabel))return;
+  if(s.origin==='pay'){
+    pending.push({id:nextId++,desc:s.desc,amount:s.amount,due:s.date,cat:s.cat,notes:s.notes});
+    if(!catsPay.includes(s.cat)&&s.cat)catsPay.push(s.cat);
+  }else if(s.origin==='paid'){
+    paid.unshift({id:nextId++,desc:s.desc,amount:s.amount,due:s.date,cat:s.cat,notes:s.notes,paidAt:s.createdAt});
+    if(!catsPaid.includes(s.cat)&&s.cat)catsPaid.push(s.cat);
+  }
+  shops=shops.filter(x=>x.id!==id);
+  saveState();render();
+  toast('"'+s.desc+'" επέστρεψε στα '+originLabel+' ↩','red');
+}
+function markShopPaid(id){
+  const s=shops.find(s=>s.id===id);if(!s)return;
+  // Move from Ψώνια → Πληρωμένα, with a reference back
+  paid.unshift({
+    id:nextId++, desc:s.desc, amount:s.amount, due:s.date,
+    cat:s.cat||'Ψώνια', notes:s.notes,
+    paidAt:new Date().toISOString(),
+    shopRef:s.id  // keeps link so undo can work
+  });
+  if(!catsPaid.includes(s.cat||'Ψώνια')) catsPaid.push(s.cat||'Ψώνια');
+  shops=shops.filter(x=>x.id!==id);
+  saveState();render();
+  // Switch to Πληρωμένα to show it
+  switchTab('paid');
+  toast('"'+s.desc+'" μεταφέρθηκε στα Πληρωμένα ✅','green');
+}
+
+function deleteShop(id){
+  const s=shops.find(s=>s.id===id);if(!s)return;
+  if(!confirm('⚠️ Οριστική διαγραφή:\n"'+s.desc+'"\n\nΔεν μπορεί να αναιρεθεί!'))return;
+  shops=shops.filter(x=>x.id!==id);saveState();render();
+  toast('"'+s.desc+'" διαγράφηκε 🗑','del');
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function shake(id){
+  const el=document.getElementById(id);
+  el.style.borderColor='var(--accent)';el.style.animation='shake .3s';
+  setTimeout(()=>{el.style.borderColor='';el.style.animation='';},600);
+}
+function clearPayForm(){
+  ['f-desc','f-amount','f-due','f-notes'].forEach(id=>document.getElementById(id).value='');
+  const s=document.getElementById('f-cat');if(s.options.length)s.selectedIndex=0;
+}
+let formOpen=false;
+function toggleForm(){
+  formOpen=!formOpen;
+  document.getElementById('add-form').classList.toggle('open',formOpen);
+  if(formOpen)setTimeout(()=>document.getElementById('f-desc').focus(),50);
+}
+function switchTab(which){
+  const tabs=['pay','paid','cat','todo','shop','sum'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===which));
+  tabs.forEach(id=>document.getElementById(`panel-${id}`).classList.toggle('active',id===which));
+}
+let toastTimer;
+function toast(msg,type){
+  const el=document.getElementById('toast');
+  el.className='toast show'+(type?' '+type:'');
+  el.innerHTML=(type==='green'?'✅ ':type==='red'?'↩ ':type==='purple'?'🏷 ':type==='del'?'🗑 ':type==='todo'?'☑ ':'📋 ')+msg;
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+function setTodoFilter(f){
+  todoFilter=f;
+  render();
+}
+
+function toggleDoneSection(){
+  const sec=document.getElementById('done-section');
+  const hdr=sec.querySelector('.done-section-header');
+  const list=document.getElementById('done-list');
+  const isOpen=hdr.classList.contains('open');
+  hdr.classList.toggle('open',!isOpen);
+  list.style.display=isOpen?'none':'block';
+  sec.dataset.open=String(!isOpen);
+}
+
+
+
+// ── PWA ──────────────────────────────────────────────────────────────────────
+(function(){
+  // Inject Web App Manifest dynamically (works from file:// and any origin)
+  const manifest={
+    name:'Διαχείριση Πληρωμών',
+    short_name:'Πληρωμές',
+    description:'Παρακολούθηση πληρωμών, εργασιών και ψωνιών',
+    start_url:location.href.split('?')[0],
+    display:'standalone',
+    background_color:'#f5f0e8',
+    theme_color:'#1a1a2e',
+    orientation:'any',
+    icons:[
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="32" fill="%231a1a2e"/><text y="130" x="96" text-anchor="middle" font-size="110" font-family="serif">💶</text></svg>',sizes:'192x192',type:'image/svg+xml'},
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="%231a1a2e"/><text y="360" x="256" text-anchor="middle" font-size="300" font-family="serif">💶</text></svg>',sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const link=document.getElementById('pwa-manifest');
+  if(link) link.href=url;
+
+  // Service Worker registration (provides offline support)
+  if('serviceWorker' in navigator){
+    const sw=`
+const CACHE='pt-v1';
+const ASSETS=['${location.href.split('?')[0]}','https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&display=swap'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>{})).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http'))return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res.ok){const c=res.clone();caches.open(CACHE).then(ca=>ca.put(e.request,c));}return res;}).catch(()=>r)));});`;
+    const swBlob=new Blob([sw],{type:'application/javascript'});
+    const swUrl=URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(()=>{});
+  }
+
+  // Install prompt
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    deferredPrompt=e;
+    const bar=document.getElementById('pwa-install-bar');
+    if(bar && !localStorage.getItem('pwa-dismissed')) bar.style.display='flex';
+  });
+  document.getElementById('pwa-install-btn').addEventListener('click',async()=>{
+    const bar=document.getElementById('pwa-install-bar');
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const{outcome}=await deferredPrompt.userChoice;
+      deferredPrompt=null;
+      if(bar) bar.style.display='none';
+    }
+  });
+  document.getElementById('pwa-dismiss-btn').addEventListener('click',()=>{
+    const bar=document.getElementById('pwa-install-bar');
+    if(bar) bar.style.display='none';
+    localStorage.setItem('pwa-dismissed','1');
+  });
+  // On iOS show instructions once
+  const isIos=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone;
+  if(isIos && !localStorage.getItem('pwa-dismissed')){
+    const bar=document.getElementById('pwa-install-bar');
+    if(bar){
+      bar.querySelector('.pwa-msg').textContent='📲 iOS: πατήστε το κουμπί Κοινής χρήσης (↑) και "Προσθήκη στην Αρχική"';
+      bar.querySelector('.pwa-btn').style.display='none';
+      bar.style.display='flex';
+    }
+  }
+})();
+
+loadState();render();
+
+// ── PWA: Inline Manifest ──────────────────────────────────────────────────────
+(function(){
+  const manifest={
+    name:'Διαχείριση Πληρωμών',
+    short_name:'Πληρωμές',
+    description:'Παρακολούθηση πληρωμών, εργασιών και ψωνιών',
+    start_url:window.location.pathname||'/',
+    display:'standalone',
+    background_color:'#f5f0e8',
+    theme_color:'#1a1a2e',
+    orientation:'any',
+    icons:[
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="24" fill="%231a1a2e"/><text x="96" y="130" font-size="110" text-anchor="middle">💳</text></svg>',sizes:'192x192',type:'image/svg+xml'},
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="64" fill="%231a1a2e"/><text x="256" y="350" font-size="300" text-anchor="middle">💳</text></svg>',sizes:'512x512',type:'image/svg+xml'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+  const url=URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest').href=url;
+})();
+
+// ── PWA: Service Worker (offline support) ────────────────────────────────────
+if('serviceWorker' in navigator){
+  const swCode=`
+const CACHE='pt-v1';
+const ASSETS=[self.registration.scope];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  e.respondWith(caches.match(e.request).then(cached=>{
+    const net=fetch(e.request).then(res=>{
+      if(res&&res.status===200){const c=res.clone();caches.open(CACHE).then(ca=>ca.put(e.request,c));}
+      return res;
+    }).catch(()=>cached);
+    return cached||net;
+  }));
+});
+`;
+  const swBlob=new Blob([swCode],{type:'application/javascript'});
+  const swUrl=URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl,{scope:'./'}).catch(()=>{});
+}
+
+// ── PWA: Install prompt ───────────────────────────────────────────────────────
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  const bar=document.getElementById('install-bar');
+  if(bar)bar.style.display='flex';
+});
+window.addEventListener('appinstalled',()=>{
+  const bar=document.getElementById('install-bar');
+  if(bar)bar.style.display='none';
+  deferredPrompt=null;
+});
+function installApp(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(()=>{deferredPrompt=null;});
+}
+</script>
+
+<!-- Install banner (shown only when browser supports PWA install) -->
+<div id="install-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:white;padding:14px 20px;font-family:'DM Mono',monospace;font-size:.78rem;align-items:center;justify-content:space-between;gap:12px;z-index:1000;box-shadow:0 -4px 20px rgba(0,0,0,.2);">
+  <span>📲 Εγκαταστήστε την εφαρμογή στη συσκευή σας για γρήγορη πρόσβαση!</span>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button onclick="installApp()" style="background:#c84b31;color:white;border:none;padding:8px 18px;border-radius:3px;font-family:inherit;font-size:.75rem;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;">Εγκατάσταση</button>
+    <button onclick="document.getElementById('install-bar').style.display='none'" style="background:transparent;color:#9a9080;border:1px solid #3a3a5a;padding:8px 12px;border-radius:3px;font-family:inherit;font-size:.75rem;cursor:pointer;">✕</button>
+  </div>
+</div>
+</body>
+</html>
