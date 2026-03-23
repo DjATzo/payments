@@ -67,11 +67,6 @@ const FIREBASE_CONFIG = window.__FIREBASE_CONFIG__ || {
       window.__fbReady = true;
       updateAuthUI(user);
 
-      // If switching accounts, clear in-memory + localStorage of previous user
-      if (prevUid && prevUid !== uid) {
-        window.__clearStateForUser(prevUid);
-      }
-
       // Load this user's localStorage snapshot first (for instant offline render)
       window.__loadStateForUser(uid);
 
@@ -92,8 +87,6 @@ const FIREBASE_CONFIG = window.__FIREBASE_CONFIG__ || {
       window.__currentUid = null;
       window.__fbReady = false;
       if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-      // Clear in-memory state so UI goes blank / shows defaults
-      if (prevUid) window.__clearStateForUser(prevUid);
       window.__resetToEmpty();
       updateAuthUI(null);
     }
@@ -983,10 +976,15 @@ function loadState(){
     const uid=_uid();
     const sp=localStorage.getItem(K(KEY_SUFFIX.PENDING));
     if(sp===null){
-      pending=DEFAULT_PENDING;paid=[];nextId=8;
+      // No data for this user yet — start completely empty
+      // (Firebase will load cloud data if signed in; otherwise fresh start)
+      pending=[];paid=[];nextId=1;
       catsPay=[...DEFAULT_CATS];catsPaid=[...DEFAULT_CATS];
       todos=[];nextTodoId=1;
-      saveState();
+      shops=[];nextShopId=1;
+      collectedShops=[];
+      recurs=[];nextRecurId=1;
+      recurLog=[];
     }else{
       pending=JSON.parse(sp);
       paid=JSON.parse(localStorage.getItem(K(KEY_SUFFIX.PAID))||'[]');
@@ -1005,7 +1003,7 @@ function loadState(){
       if(savedTz) userTz=savedTz;
     }
   }catch(e){
-    pending=DEFAULT_PENDING;paid=[];nextId=8;
+    pending=[];paid=[];nextId=1;
     catsPay=[...DEFAULT_CATS];catsPaid=[...DEFAULT_CATS];
     todos=[];nextTodoId=1;
     shops=[];nextShopId=1;
