@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Πληρωμές">
 <link rel="manifest" id="pwa-manifest">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -160,7 +161,14 @@ body{background:var(--paper);color:var(--ink);font-family:var(--mono);min-height
 .tab.weather-tab.active .badge{background:#0ea5e9;}
 
 /* ── Weather Panel ─────────────────────────────────────────────────── */
-.weather-search-bar{display:flex;gap:10px;margin-bottom:8px;}
+.import-preview-item{background:var(--paper2);border:1.5px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.import-preview-item input{border:1px solid var(--border);background:white;padding:5px 8px;font-family:var(--mono);font-size:.78rem;border-radius:3px;flex:1;min-width:80px;}
+.import-preview-item label{font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:#9a9080;display:block;margin-bottom:2px;}
+.import-preview-field{display:flex;flex-direction:column;}
+.import-check{width:18px;height:18px;cursor:pointer;flex-shrink:0;}
+.import-actions{display:flex;gap:8px;margin-top:12px;}
+.import-status-ok{color:var(--paid-accent);font-size:.8rem;}
+.import-status-err{color:var(--accent);font-size:.8rem;}
 .weather-search-input{flex:1;border:1.5px solid var(--border);background:white;padding:10px 14px;font-family:var(--mono);font-size:.85rem;color:var(--ink);border-radius:4px;outline:none;transition:border-color .15s;}
 .weather-search-input:focus{border-color:#0ea5e9;}
 .weather-search-btn{background:#0ea5e9;color:white;border:none;padding:10px 20px;border-radius:4px;font-family:var(--mono);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
@@ -627,7 +635,44 @@ tr.todo-done .action-btn{text-decoration:none;}
 
 <!-- ΠΡΟΣ ΠΛΗΡΩΜΗ -->
 <div class="panel active" id="panel-pay">
-  <button class="btn btn-add" onclick="toggleForm()">+ Νέα Πληρωμή</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;">
+    <button class="btn btn-add" style="margin-bottom:0;" onclick="toggleForm()">+ Νέα Πληρωμή</button>
+    <button class="btn" style="background:#7c3aed;color:white;margin-bottom:0;" onclick="toggleImportForm()">📎 Εισαγωγή από αρχείο</button>
+  </div>
+
+  <!-- Import form -->
+  <div class="add-form" id="import-form" style="margin-top:12px;">
+    <h3>📎 Εισαγωγή Πληρωμών από Αρχείο</h3>
+
+    <!-- Excel header guide -->
+    <div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;">
+      <strong style="color:#5b21b6;">📊 Για Excel/CSV</strong> — χρησιμοποίησε ακριβώς αυτές τις επικεφαλίδες:<br>
+      <code style="display:inline-block;margin-top:6px;background:white;border:1px solid #c4b5fd;border-radius:3px;padding:3px 8px;font-size:.78rem;letter-spacing:.03em;color:#1a1a2e;">
+        Περιγραφή &nbsp;|&nbsp; Ποσό &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Σημειώσεις
+      </code><br>
+      <span style="color:#7c3aed;margin-top:4px;display:block;">Τα πεδία Ημερομηνία, Κατηγορία, Σημειώσεις είναι προαιρετικά.</span>
+    </div>
+
+    <p style="font-size:.78rem;color:#6b7280;margin-bottom:12px;">Για PDF και εικόνες το AI εξάγει αυτόματα τα στοιχεία.</p>
+    <div class="form-field" style="margin-bottom:12px;">
+      <label>Αρχείο *</label>
+      <input type="file" id="import-file-input" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.xlsx,.xls" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;border-radius:3px;">
+    </div>
+    <div class="form-field" style="margin-bottom:14px;">
+      <label>Πρόσθετες οδηγίες για AI (προαιρετικό)</label>
+      <input type="text" id="import-hint" placeholder="π.χ. ΔΕΗ Απρίλιος, κατηγορία Κοινόχρηστα" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;width:100%;">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="toggleImportForm()">Ακύρωση</button>
+      <button class="btn" id="import-btn" style="background:#7c3aed;color:white;" onclick="runImport()">🔍 Ανάλυση</button>
+    </div>
+    <div id="import-status" style="display:none;margin-top:12px;"></div>
+    <div id="import-preview" style="display:none;margin-top:12px;"></div>
+  </div>
+
+  <div style="margin-top:12px;">
+    <button class="btn btn-add" onclick="toggleForm()" id="new-pay-btn2" style="display:none;">+ Νέα Πληρωμή</button>
+  </div>
   <div class="add-form" id="add-form">
     <h3>Νέα Πληρωμή</h3>
     <div class="form-grid">
@@ -2559,9 +2604,238 @@ function renderWeatherData(root, city, weather){
     </div>`;
 }
 
-loadState();render();switchGroup('pay');
+// ── Import from file (AI-powered) ────────────────────────────────────────────
+let importFormOpen=false;
+function toggleImportForm(){
+  importFormOpen=!importFormOpen;
+  const f=document.getElementById('import-form');
+  f.classList.toggle('open',importFormOpen);
+  if(importFormOpen){
+    document.getElementById('import-status').style.display='none';
+    document.getElementById('import-preview').style.display='none';
+    document.getElementById('import-file-input').value='';
+    document.getElementById('import-hint').value='';
+  }
+}
+
+async function runImport(){
+  const fileInput=document.getElementById('import-file-input');
+  const hint=document.getElementById('import-hint').value.trim();
+  const statusEl=document.getElementById('import-status');
+  const previewEl=document.getElementById('import-preview');
+  const btn=document.getElementById('import-btn');
+
+  if(!fileInput.files.length){
+    statusEl.innerHTML='<span class="import-status-err">⚠ Παρακαλώ επιλέξτε αρχείο.</span>';
+    statusEl.style.display='block'; return;
+  }
+
+  const file=fileInput.files[0];
+  const ext=file.name.split('.').pop().toLowerCase();
+  btn.disabled=true; btn.textContent='⏳ Ανάλυση…';
+  statusEl.innerHTML='<span class="import-status-ok">⏳ Επεξεργασία αρχείου…</span>';
+  statusEl.style.display='block';
+  previewEl.style.display='none';
+
+  try{
+    let items=null;
+
+    // ── Direct parse for Excel / CSV (no AI needed if headers match) ──────────
+    if(['xlsx','xls','csv'].includes(ext)){
+      items=await parseSpreadsheet(file, ext);
+      if(items===null){
+        // Headers didn't match — fall through to AI
+        statusEl.innerHTML='<span class="import-status-ok">⏳ Οι επικεφαλίδες δεν αναγνωρίστηκαν — χρησιμοποιώ AI…</span>';
+      }
+    }
+
+    // ── AI for PDF, images, TXT, or unrecognised spreadsheets ─────────────────
+    if(items===null){
+      items=await parseWithAI(file, ext, hint);
+    }
+
+    if(!Array.isArray(items)||!items.length){
+      statusEl.innerHTML='<span class="import-status-err">⚠ Δεν βρέθηκαν πληρωμές στο αρχείο.</span>';
+      btn.disabled=false; btn.textContent='🔍 Ανάλυση'; return;
+    }
+
+    statusEl.innerHTML=`<span class="import-status-ok">✅ Βρέθηκαν ${items.length} εγγραφές. Επιβεβαίωσε και εισήγαγε:</span>`;
+    renderImportPreview(items);
+  }catch(e){
+    statusEl.innerHTML=`<span class="import-status-err">⚠ Σφάλμα: ${e.message}</span>`;
+  }
+  btn.disabled=false; btn.textContent='🔍 Ανάλυση';
+}
+
+// ── Parse Excel/CSV directly using SheetJS ───────────────────────────────────
+// Returns array of items if headers match, or null if headers not recognised
+async function parseSpreadsheet(file, ext){
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array',cellDates:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{raw:false,defval:''});
+  if(!rows.length) return [];
+
+  // Normalise header names (trim, lowercase for matching)
+  const sample=rows[0];
+  const keys=Object.keys(sample);
+
+  // Map Greek header names → internal field names
+  const HEADER_MAP={
+    'περιγραφή':'desc','περιγραφη':'desc','description':'desc','desc':'desc','name':'desc','ονομα':'desc','όνομα':'desc',
+    'ποσό':'amount','ποσο':'amount','amount':'amount','τιμή':'amount','τιμη':'amount','price':'amount','κόστος':'amount','κοστος':'amount',
+    'ημερομηνία':'due','ημερομηνια':'due','date':'due','due':'due','λήξη':'due','ληξη':'due',
+    'κατηγορία':'cat','κατηγορια':'cat','category':'cat','cat':'cat','τύπος':'cat','τυπος':'cat',
+    'σημειώσεις':'notes','σημειωσεις':'notes','notes':'notes','σημειώσεις':'notes','info':'notes','πληροφορίες':'notes',
+  };
+
+  // Build column mapping
+  const colMap={};
+  keys.forEach(k=>{
+    const norm=k.trim().toLowerCase().replace(/\s+/g,'');
+    const mapped=HEADER_MAP[norm];
+    if(mapped) colMap[k]=mapped;
+  });
+
+  // If no desc or amount column found → return null (let AI handle it)
+  const hasDesc=Object.values(colMap).includes('desc');
+  const hasAmt=Object.values(colMap).includes('amount');
+  if(!hasDesc&&!hasAmt) return null;
+
+  return rows.map(row=>{
+    const item={desc:'',amount:0,due:'',cat:'',notes:''};
+    Object.entries(colMap).forEach(([col,field])=>{
+      let val=row[col];
+      if(field==='amount'){
+        val=String(val).replace(/[€,\s]/g,'').replace(',','.');
+        item.amount=parseFloat(val)||0;
+      } else if(field==='due'){
+        // Try to parse date
+        if(val){
+          const d=new Date(val);
+          if(!isNaN(d)) item.due=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+          else item.due=String(val).trim();
+        }
+      } else {
+        item[field]=String(val||'').trim();
+      }
+    });
+    return item;
+  }).filter(i=>i.desc||i.amount);
+}
+
+// ── Parse with Claude AI (for PDF, images, TXT) ───────────────────────────────
+async function parseWithAI(file, ext, hint){
+  const cats=[...new Set([...catsPay,...DEFAULT_CATS])].filter(Boolean);
+  const systemPrompt=`Είσαι βοηθός εξαγωγής οικονομικών δεδομένων. Ανάλυσε το αρχείο και εξήγαγε ΟΛΕΣ τις πληρωμές/χρεώσεις/λογαριασμούς.
+Επίστρεψε ΜΟΝΟ έγκυρο JSON array, χωρίς markdown, χωρίς εξηγήσεις. Κάθε αντικείμενο:
+- desc: string
+- amount: number (ευρώ)
+- due: string YYYY-MM-DD ή ""
+- cat: string (από: ${cats.join(', ')})
+- notes: string ή ""
+${hint?'Οδηγίες: '+hint:''}
+Αν δεν βρεις πληρωμές επίστρεψε [].`;
+
+  let messageContent;
+  if(['png','jpg','jpeg','webp','gif'].includes(ext)){
+    const b64=await fileToBase64(file);
+    messageContent=[{type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}},{type:'text',text:'Εξήγαγε τις πληρωμές.'}];
+  } else if(ext==='pdf'){
+    const b64=await fileToBase64(file);
+    messageContent=[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Εξήγαγε τις πληρωμές.'}];
+  } else {
+    const text=await file.text();
+    messageContent=[{type:'text',text:'Εξήγαγε τις πληρωμές:\n\n'+text.slice(0,20000)}];
+  }
+
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:systemPrompt,messages:[{role:'user',content:messageContent}]})
+  });
+  const data=await res.json();
+  const raw=data.content?.map(c=>c.text||'').join('').trim();
+  const cleaned=raw.replace(/^```[\w]*\n?/,'').replace(/\n?```$/,'').trim();
+  try{ return JSON.parse(cleaned); }
+  catch(e){ throw new Error('Το AI επέστρεψε μη έγκυρο JSON: '+raw.slice(0,200)); }
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=()=>rej(new Error('Αποτυχία ανάγνωσης αρχείου'));
+    r.readAsDataURL(file);
+  });
+}
+
+function renderImportPreview(items){
+  const previewEl=document.getElementById('import-preview');
+  const cats=[...new Set([...catsPay,...DEFAULT_CATS])].filter(Boolean);
+  const catOptions=cats.map(c=>`<option value="${esc(c)}">`).join('');
+
+  const html=items.map((item,i)=>`
+    <div class="import-preview-item" id="imp-row-${i}">
+      <input type="checkbox" class="import-check" id="imp-chk-${i}" checked>
+      <div class="import-preview-field" style="flex:2;min-width:120px;">
+        <label>Περιγραφή</label>
+        <input type="text" id="imp-desc-${i}" value="${esc(item.desc||'')}">
+      </div>
+      <div class="import-preview-field" style="flex:1;min-width:70px;">
+        <label>Ποσό €</label>
+        <input type="number" id="imp-amt-${i}" value="${item.amount||''}" step="0.01" min="0">
+      </div>
+      <div class="import-preview-field" style="flex:1;min-width:110px;">
+        <label>Ημερομηνία</label>
+        <input type="date" id="imp-due-${i}" value="${item.due||''}">
+      </div>
+      <div class="import-preview-field" style="flex:1;min-width:110px;">
+        <label>Κατηγορία</label>
+        <input type="text" id="imp-cat-${i}" value="${esc(item.cat||'')}" list="imp-cat-list-${i}">
+        <datalist id="imp-cat-list-${i}">${catOptions}</datalist>
+      </div>
+      <div class="import-preview-field" style="flex:1;min-width:100px;">
+        <label>Σημειώσεις</label>
+        <input type="text" id="imp-notes-${i}" value="${esc(item.notes||'')}">
+      </div>
+    </div>`).join('');
+
+  previewEl.innerHTML=html+`
+    <div class="import-actions">
+      <button class="btn btn-primary" onclick="confirmImport(${items.length})">✅ Εισαγωγή επιλεγμένων</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('import-preview').style.display='none'">Ακύρωση</button>
+    </div>`;
+  previewEl.style.display='block';
+}
+
+function confirmImport(count){
+  let imported=0;
+  for(let i=0;i<count;i++){
+    const chk=document.getElementById('imp-chk-'+i);
+    if(!chk||!chk.checked) continue;
+    const desc=(document.getElementById('imp-desc-'+i)?.value||'').trim();
+    const amount=parseFloat(document.getElementById('imp-amt-'+i)?.value)||0;
+    const due=document.getElementById('imp-due-'+i)?.value||'';
+    const cat=(document.getElementById('imp-cat-'+i)?.value||'').trim();
+    const notes=(document.getElementById('imp-notes-'+i)?.value||'').trim();
+    if(!desc) continue;
+    pending.push({id:nextId++,desc,amount,due,cat,notes});
+    if(cat&&!catsPay.includes(cat)) catsPay.push(cat);
+    imported++;
+  }
+  if(imported){
+    saveState();render();
+    toast(`✅ Εισήχθησαν ${imported} πληρωμές`,'green');
+    toggleImportForm();
+  } else {
+    document.getElementById('import-status').innerHTML='<span class="import-status-err">⚠ Καμία επιλεγμένη εγγραφή.</span>';
+    document.getElementById('import-status').style.display='block';
+  }
+}
 
 // ── PWA: Inline Manifest ──────────────────────────────────────────────────────
+loadState();render();switchGroup('pay');
 (function(){
   const manifest={
     name:'Διαχείριση Πληρωμών',
