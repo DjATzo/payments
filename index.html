@@ -161,7 +161,13 @@ body{background:var(--paper);color:var(--ink);font-family:var(--mono);min-height
 .tab.weather-tab.active .badge{background:#0ea5e9;}
 
 /* ── Weather Panel ─────────────────────────────────────────────────── */
-.import-preview-item{background:var(--paper2);border:1.5px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.edit-modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,26,46,.5);z-index:600;align-items:center;justify-content:center;padding:20px;}
+.edit-modal-overlay.open{display:flex;}
+.edit-modal{background:var(--paper);border-radius:6px;padding:24px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.edit-modal h3{font-family:var(--serif);font-size:1rem;margin-bottom:16px;color:var(--ink);}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.edit-grid-1{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;}
+@media(max-width:500px){.edit-grid{grid-template-columns:1fr;}}background:var(--paper2);border:1.5px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .import-preview-item input{border:1px solid var(--border);background:white;padding:5px 8px;font-family:var(--mono);font-size:.78rem;border-radius:3px;flex:1;min-width:80px;}
 .import-preview-item label{font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:#9a9080;display:block;margin-bottom:2px;}
 .import-preview-field{display:flex;flex-direction:column;}
@@ -1295,7 +1301,7 @@ function renderRecurList(){
     else if(diff===1) nextHtml='<span class="recur-next soon">● Αύριο</span>';
     else nextHtml=`<span class="recur-next">● σε ${diff} μέρες</span>`;
     const amtHtml=r.amount?`<span style="font-family:var(--serif);font-size:.82rem;font-weight:600;color:var(--ink)">€${fmt(r.amount)}</span>`:'';
-    return`<div class="recur-card">
+    return`<div class="recur-card" style="cursor:pointer" onclick="openEdit('recur',${r.id})">
       <div class="recur-card-left">
         <div class="recur-card-name">${esc(r.name)} ${amtHtml}</div>
         <div class="recur-card-meta">
@@ -1306,7 +1312,7 @@ function renderRecurList(){
         </div>
         ${r.notes?`<div class="recur-card-notes">${esc(r.notes)}</div>`:''}
       </div>
-      <div class="recur-card-actions">
+      <div class="recur-card-actions" onclick="event.stopPropagation()">
         <button class="action-btn del-btn" style="width:auto;padding:5px 10px;" onclick="deleteRecur(${r.id})">🗑</button>
       </div>
     </div>`;
@@ -1381,14 +1387,14 @@ function render(){
     tb1.innerHTML=`<tr><td colspan="7"><div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμείς πληρωμές!</p></div></td></tr>`;
   }else{
     tb1.innerHTML=sortByDate(pending,'due').map((item,i)=>`
-      <tr>
+      <tr style="cursor:pointer" onclick="openEdit('pay',${item.id})">
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(item.desc)}</strong></td>
         <td class="amount">€ ${fmt(item.amount)}</td>
         <td>${duePill(item.due)}</td>
         <td class="category"><span>${esc(item.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(item.notes||'—')}</td>
-        <td><div class="action-cell">
+        <td onclick="event.stopPropagation()"><div class="action-cell">
           <button class="action-btn pay-btn" onclick="markPaid(${item.id})">✅ Πληρώθηκε</button>
           <button class="action-btn del-btn" onclick="deletePending(${item.id})">🗑 Διαγραφή</button>
         </div></td>
@@ -1401,7 +1407,7 @@ function render(){
     tb2.innerHTML=`<tr><td colspan="8"><div class="empty-state"><span class="icon">📭</span><p>Δεν υπάρχουν πληρωμένα ακόμα.</p></div></td></tr>`;
   }else{
     tb2.innerHTML=paid.map((item,i)=>`
-      <tr>
+      <tr style="cursor:pointer" onclick="openEdit('paid',${item.id})">
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(item.desc)}</strong></td>
         <td class="amount" style="color:var(--paid-accent)">€ ${fmt(item.amount)}</td>
@@ -1409,7 +1415,7 @@ function render(){
         <td class="category"><span>${esc(item.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(item.notes||'—')}</td>
         <td class="paid-date">✓ ${new Date(item.paidAt).toLocaleDateString('el-GR')}</td>
-        <td><div class="action-cell">
+        <td onclick="event.stopPropagation()"><div class="action-cell">
           ${item.shopRef!=null
             ? `<button class="action-btn shop-btn" onclick="moveBackToShop(${item.id})">↩ Να εισπραχθούν</button>`
             : `<button class="action-btn back-btn" onclick="moveBack(${item.id})">↩ Αναίρεση</button>`
@@ -1446,14 +1452,14 @@ function render(){
     tbs.innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">🛍</span><p>Δεν υπάρχουν εκκρεμή ψώνια.<br>Προσθέστε χρήματα που σας χρωστάνε.</p></div></td></tr>`;
   }else{
     tbs.innerHTML=sortByDate(shops,'date').map((s,i)=>`
-      <tr>
+      <tr style="cursor:pointer" onclick="openEdit('shop',${s.id})">
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(s.desc)}</strong></td>
         <td class="amount" style="color:#8b4513">€ ${fmt(s.amount)}</td>
         <td>${s.date?new Date(s.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'})+daysLabel(s.date):'—'}</td>
         <td class="category"><span>${esc(s.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(s.notes||'—')}</td>
-        <td><div class="action-cell">
+        <td onclick="event.stopPropagation()"><div class="action-cell">
           <button class="action-btn pay-btn" onclick="markShopCollected(${s.id})">💰 Εισπράχθηκε</button>
           <button class="action-btn del-btn" onclick="deleteShop(${s.id})">🗑 Διαγραφή</button>
         </div></td>
@@ -1804,14 +1810,14 @@ function render(){
     tbt.innerHTML=filtered.map((t,i)=>{
       const overdue=t.date&&new Date(t.date)<now2;
       const dateLbl=t.date?new Date(t.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
-      return`<tr>
+      return`<tr style="cursor:pointer" onclick="openEdit('todo',${t.id})">
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(t.name)}</strong></td>
         <td style="${overdue?'color:var(--accent);font-weight:500':''}">${overdue?'⚠ ':''}${dateLbl}${t.date?daysLabel(t.date):''}</td>
         <td class="category"><span>${esc(t.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem;white-space:pre-wrap;max-width:200px">${esc(t.info||'—')}</td>
-        <td><button class="action-btn done-btn" onclick="toggleTodo(${t.id})">✔ Ολοκληρώθηκε</button></td>
-        <td><button class="action-btn del-btn" onclick="deleteTodo(${t.id})">🗑</button></td>
+        <td onclick="event.stopPropagation()"><button class="action-btn done-btn" onclick="toggleTodo(${t.id})">✔ Ολοκληρώθηκε</button></td>
+        <td onclick="event.stopPropagation()"><button class="action-btn del-btn" onclick="deleteTodo(${t.id})">🗑</button></td>
       </tr>`;
     }).join('');
   }
@@ -3270,6 +3276,91 @@ function fqNext(){
   }
 }
 
+// ── Edit Modal ────────────────────────────────────────────────────────────────
+function openEdit(type, id){
+  const overlay=document.getElementById('edit-modal-overlay');
+  const body=document.getElementById('edit-modal-body');
+  const cats=[...new Set([...catsPay,...DEFAULT_CATS])].filter(Boolean);
+  const catOpts=cats.map(c=>`<option value="${esc(c)}">`).join('');
+  const iStyle='width:100%;border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;box-sizing:border-box;';
+  if(type==='pay'||type==='paid'){
+    const item=(type==='pay'?pending:paid).find(i=>i.id===id); if(!item) return;
+    body.innerHTML=`<h3>✏️ Επεξεργασία Πληρωμής</h3>
+      <div class="edit-grid">
+        <div class="form-field" style="grid-column:1/-1"><label>Περιγραφή *</label><input id="ed-f1" value="${esc(item.desc)}" style="${iStyle}"></div>
+        <div class="form-field"><label>Ποσό (€)</label><input id="ed-f2" type="number" step="0.01" value="${item.amount}" style="${iStyle}"></div>
+        <div class="form-field"><label>Ημερομηνία</label><input id="ed-f3" type="date" value="${item.due||''}" style="${iStyle}"></div>
+        <div class="form-field"><label>Κατηγορία</label><input id="ed-f4" value="${esc(item.cat||'')}" list="ed-cats" style="${iStyle}"><datalist id="ed-cats">${catOpts}</datalist></div>
+        <div class="form-field" style="grid-column:1/-1"><label>Σημειώσεις</label><input id="ed-f5" value="${esc(item.notes||'')}" style="${iStyle}"></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-ghost" onclick="closeEdit()">Ακύρωση</button><button class="btn btn-primary" onclick="saveEdit('${type}',${id})">💾 Αποθήκευση</button></div>`;
+  } else if(type==='todo'){
+    const item=todos.find(t=>t.id===id); if(!item) return;
+    body.innerHTML=`<h3>✏️ Επεξεργασία Εργασίας</h3>
+      <div class="edit-grid">
+        <div class="form-field" style="grid-column:1/-1"><label>Όνομα *</label><input id="ed-f1" value="${esc(item.name)}" style="${iStyle}"></div>
+        <div class="form-field"><label>Ημερομηνία</label><input id="ed-f3" type="date" value="${item.date||''}" style="${iStyle}"></div>
+        <div class="form-field"><label>Κατηγορία</label><input id="ed-f4" value="${esc(item.cat||'')}" list="ed-cats" style="${iStyle}"><datalist id="ed-cats">${catOpts}</datalist></div>
+        <div class="form-field" style="grid-column:1/-1"><label>Πληροφορίες</label><textarea id="ed-f5" style="${iStyle}resize:vertical;min-height:60px;">${esc(item.info||'')}</textarea></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-ghost" onclick="closeEdit()">Ακύρωση</button><button class="btn btn-primary" onclick="saveEdit('todo',${id})">💾 Αποθήκευση</button></div>`;
+  } else if(type==='shop'){
+    const item=shops.find(s=>s.id===id); if(!item) return;
+    body.innerHTML=`<h3>✏️ Επεξεργασία Είσπραξης</h3>
+      <div class="edit-grid">
+        <div class="form-field" style="grid-column:1/-1"><label>Περιγραφή *</label><input id="ed-f1" value="${esc(item.desc)}" style="${iStyle}"></div>
+        <div class="form-field"><label>Ποσό (€)</label><input id="ed-f2" type="number" step="0.01" value="${item.amount||''}" style="${iStyle}"></div>
+        <div class="form-field"><label>Ημερομηνία</label><input id="ed-f3" type="date" value="${item.date||''}" style="${iStyle}"></div>
+        <div class="form-field"><label>Κατηγορία</label><input id="ed-f4" value="${esc(item.cat||'')}" list="ed-cats" style="${iStyle}"><datalist id="ed-cats">${catOpts}</datalist></div>
+        <div class="form-field" style="grid-column:1/-1"><label>Σημειώσεις</label><input id="ed-f5" value="${esc(item.notes||'')}" style="${iStyle}"></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-ghost" onclick="closeEdit()">Ακύρωση</button><button class="btn btn-primary" onclick="saveEdit('shop',${id})">💾 Αποθήκευση</button></div>`;
+  } else if(type==='recur'){
+    const item=recurs.find(r=>r.id===id); if(!item) return;
+    body.innerHTML=`<h3>✏️ Επεξεργασία Επαναλαμβανόμενου</h3>
+      <div class="edit-grid">
+        <div class="form-field" style="grid-column:1/-1"><label>Όνομα *</label><input id="ed-f1" value="${esc(item.name)}" style="${iStyle}"></div>
+        <div class="form-field"><label>Ποσό (€)</label><input id="ed-f2" type="number" step="0.01" value="${item.amount||''}" style="${iStyle}"></div>
+        <div class="form-field"><label>Φορές ανά διάστημα</label><input id="ed-f6" type="number" min="1" value="${item.times||1}" style="${iStyle}"></div>
+        <div class="form-field"><label>Κατηγορία</label><input id="ed-f4" value="${esc(item.cat||'')}" list="ed-cats" style="${iStyle}"><datalist id="ed-cats">${catOpts}</datalist></div>
+        <div class="form-field" style="grid-column:1/-1"><label>Σημειώσεις</label><input id="ed-f5" value="${esc(item.notes||'')}" style="${iStyle}"></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-ghost" onclick="closeEdit()">Ακύρωση</button><button class="btn btn-primary" onclick="saveEdit('recur',${id})">💾 Αποθήκευση</button></div>`;
+  }
+  overlay.classList.add('open');
+  setTimeout(()=>document.getElementById('ed-f1')?.focus(),50);
+}
+function closeEdit(){ document.getElementById('edit-modal-overlay').classList.remove('open'); }
+function saveEdit(type,id){
+  if(type==='pay'||type==='paid'){
+    const item=(type==='pay'?pending:paid).find(i=>i.id===id); if(!item) return;
+    const desc=document.getElementById('ed-f1')?.value.trim(); if(!desc) return;
+    item.desc=desc; item.amount=parseFloat(document.getElementById('ed-f2')?.value)||0;
+    item.due=document.getElementById('ed-f3')?.value||''; item.cat=document.getElementById('ed-f4')?.value.trim()||'';
+    item.notes=document.getElementById('ed-f5')?.value.trim()||'';
+  } else if(type==='todo'){
+    const item=todos.find(t=>t.id===id); if(!item) return;
+    const name=document.getElementById('ed-f1')?.value.trim(); if(!name) return;
+    item.name=name; item.date=document.getElementById('ed-f3')?.value||'';
+    item.cat=document.getElementById('ed-f4')?.value.trim()||''; item.info=document.getElementById('ed-f5')?.value.trim()||'';
+  } else if(type==='shop'){
+    const item=shops.find(s=>s.id===id); if(!item) return;
+    const desc=document.getElementById('ed-f1')?.value.trim(); if(!desc) return;
+    item.desc=desc; item.amount=parseFloat(document.getElementById('ed-f2')?.value)||0;
+    item.date=document.getElementById('ed-f3')?.value||''; item.cat=document.getElementById('ed-f4')?.value.trim()||'';
+    item.notes=document.getElementById('ed-f5')?.value.trim()||'';
+  } else if(type==='recur'){
+    const item=recurs.find(r=>r.id===id); if(!item) return;
+    const name=document.getElementById('ed-f1')?.value.trim(); if(!name) return;
+    item.name=name; item.amount=parseFloat(document.getElementById('ed-f2')?.value)||null;
+    item.times=Math.max(1,parseInt(document.getElementById('ed-f6')?.value)||1);
+    item.cat=document.getElementById('ed-f4')?.value.trim()||''; item.notes=document.getElementById('ed-f5')?.value.trim()||'';
+  }
+  saveState(); render(); closeEdit();
+  toast('✅ Αποθηκεύτηκε','green');
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeEdit(); });
+
 loadState();render();switchGroup('pay');
 (function(){
   const manifest={
@@ -3337,6 +3428,11 @@ function installApp(){
   deferredPrompt.userChoice.then(()=>{deferredPrompt=null;});
 }
 </script>
+
+<!-- Edit Modal -->
+<div class="edit-modal-overlay" id="edit-modal-overlay" onclick="if(event.target===this)closeEdit()">
+  <div class="edit-modal" id="edit-modal-body"></div>
+</div>
 
 <!-- Install banner (shown only when browser supports PWA install) -->
 <div id="install-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:white;padding:14px 20px;font-family:'DM Mono',monospace;font-size:.78rem;align-items:center;justify-content:space-between;gap:12px;z-index:1000;box-shadow:0 -4px 20px rgba(0,0,0,.2);">
