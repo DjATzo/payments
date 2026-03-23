@@ -57,27 +57,44 @@ const FIREBASE_CONFIG = window.__FIREBASE_CONFIG__ || {
   // Expose to main script
   window.__fbSave = (s) => { if (!remoteWrite) fbSave(s); };
   window.__fbReady = false;
+  window.__currentUid = null;
 
   onAuthStateChanged(auth, async user => {
     if (user) {
+      const prevUid = window.__currentUid;
       uid = user.uid;
+      window.__currentUid = uid;
       window.__fbReady = true;
       updateAuthUI(user);
-      // Load once, then listen
+
+      // If switching accounts, clear in-memory + localStorage of previous user
+      if (prevUid && prevUid !== uid) {
+        window.__clearStateForUser(prevUid);
+      }
+
+      // Load this user's localStorage snapshot first (for instant offline render)
+      window.__loadStateForUser(uid);
+
+      // Then load from Firestore (authoritative)
       const snap = await getDoc(fbDocRef());
       if (snap.exists()) {
         remoteWrite = true;
         window.__applyRemoteState(snap.data());
         remoteWrite = false;
       } else {
-        // First time: push local data to cloud
+        // First time this account: push current (just-loaded) local data to cloud
         window.__fbSave(window.__getStateObj());
       }
       fbListen();
     } else {
+      const prevUid = window.__currentUid;
       uid = null;
+      window.__currentUid = null;
       window.__fbReady = false;
       if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+      // Clear in-memory state so UI goes blank / shows defaults
+      if (prevUid) window.__clearStateForUser(prevUid);
+      window.__resetToEmpty();
       updateAuthUI(null);
     }
   });
@@ -853,10 +870,19 @@ tr.todo-done .action-btn{text-decoration:none;}
 <div class="toast" id="toast"></div>
 
 <script>
-const KEY_PENDING='pt_pending', KEY_PAID='pt_paid', KEY_NEXTID='pt_nextid';
-const KEY_CATS_PAY='pt_cats_pay', KEY_CATS_PAID='pt_cats_paid';
-const KEY_TODOS='pt_todos', KEY_TODO_ID='pt_todo_id';
-const KEY_SHOPS='pt_shops', KEY_SHOP_ID='pt_shop_id';
+// ── localStorage keys namespaced by uid so each account is isolated ──────────
+const KEY_SUFFIX={
+  PENDING:'pt_pending', PAID:'pt_paid', NEXTID:'pt_nextid',
+  CATS_PAY:'pt_cats_pay', CATS_PAID:'pt_cats_paid',
+  TODOS:'pt_todos', TODO_ID:'pt_todo_id',
+  SHOPS:'pt_shops', SHOP_ID:'pt_shop_id',
+};
+// For keys that don't need namespacing (timezone is per-device, weather is per-device)
+const KEY_COLLECTED='pt_collected';
+const KEY_RECURS='pt_recurs',KEY_RECUR_ID='pt_recur_id',KEY_RECUR_LOG='pt_recur_log',KEY_TZ='pt_timezone';
+
+function _uid(){ return window.__currentUid||'__local__'; }
+function K(suffix){ return `${_uid()}:${suffix}`; }
 const DEFAULT_CATS=["Κοινόχρηστα","Ενοίκιο","Ασφάλεια","Υγεία","Ψυχαγωγία","Μεταφορές","Φαγητό","Εκπαίδευση","Άλλο"];
 const DEFAULT_PENDING=[
   {id:1,desc:"Λογαριασμός ΔΕΗ",   amount:85.50, due:"2025-04-15",cat:"Κοινόχρηστα",notes:"Απρίλιος"},
@@ -871,12 +897,10 @@ const DEFAULT_PENDING=[
 let pending=[],paid=[],nextId=8,catsPay=[],catsPaid=[],todos=[],nextTodoId=1;
 let shops=[],nextShopId=1;
 let collectedShops=[];
-const KEY_COLLECTED='pt_collected';
 let recurs=[],nextRecurId=1;
 let recurLog=[];
 let userTz=Intl.DateTimeFormat().resolvedOptions().timeZone;
 let todoFilter='all';
-const KEY_RECURS='pt_recurs',KEY_RECUR_ID='pt_recur_id',KEY_RECUR_LOG='pt_recur_log',KEY_TZ='pt_timezone';
 
 // Returns today's date string (YYYY-MM-DD) in the selected timezone
 function todayStr(){
@@ -919,16 +943,16 @@ function applyStateObj(d){
     if(d.recurs     !== undefined) recurs     = d.recurs;
     if(d.nextRecurId!== undefined) nextRecurId= d.nextRecurId;
     if(d.recurLog    !== undefined) recurLog   = d.recurLog;
-    // Also mirror to localStorage for offline use
-    localStorage.setItem(KEY_PENDING, JSON.stringify(pending));
-    localStorage.setItem(KEY_PAID,    JSON.stringify(paid));
-    localStorage.setItem(KEY_NEXTID,  String(nextId));
-    localStorage.setItem(KEY_CATS_PAY,  JSON.stringify(catsPay));
-    localStorage.setItem(KEY_CATS_PAID, JSON.stringify(catsPaid));
-    localStorage.setItem(KEY_TODOS,     JSON.stringify(todos));
-    localStorage.setItem(KEY_TODO_ID,   String(nextTodoId));
-    localStorage.setItem(KEY_SHOPS,     JSON.stringify(shops));
-    localStorage.setItem(KEY_SHOP_ID,   String(nextShopId));
+    // Also mirror to localStorage for offline use (namespaced by uid)
+    localStorage.setItem(K(KEY_SUFFIX.PENDING), JSON.stringify(pending));
+    localStorage.setItem(K(KEY_SUFFIX.PAID),    JSON.stringify(paid));
+    localStorage.setItem(K(KEY_SUFFIX.NEXTID),  String(nextId));
+    localStorage.setItem(K(KEY_SUFFIX.CATS_PAY),  JSON.stringify(catsPay));
+    localStorage.setItem(K(KEY_SUFFIX.CATS_PAID), JSON.stringify(catsPaid));
+    localStorage.setItem(K(KEY_SUFFIX.TODOS),     JSON.stringify(todos));
+    localStorage.setItem(K(KEY_SUFFIX.TODO_ID),   String(nextTodoId));
+    localStorage.setItem(K(KEY_SUFFIX.SHOPS),     JSON.stringify(shops));
+    localStorage.setItem(K(KEY_SUFFIX.SHOP_ID),   String(nextShopId));
     render();
     const el = document.getElementById('save-indicator');
     if(el){el.textContent='☁️ Συγχρονίστηκε';el.classList.add('show');clearTimeout(applyStateObj._t);applyStateObj._t=setTimeout(()=>{el.classList.remove('show');el.textContent='● Αποθηκεύτηκε αυτόματα';},2500);}
@@ -956,7 +980,8 @@ if (_savedCfg) { try { window.__FIREBASE_CONFIG__ = JSON.parse(_savedCfg); } cat
 
 function loadState(){
   try{
-    const sp=localStorage.getItem(KEY_PENDING);
+    const uid=_uid();
+    const sp=localStorage.getItem(K(KEY_SUFFIX.PENDING));
     if(sp===null){
       pending=DEFAULT_PENDING;paid=[];nextId=8;
       catsPay=[...DEFAULT_CATS];catsPaid=[...DEFAULT_CATS];
@@ -964,18 +989,18 @@ function loadState(){
       saveState();
     }else{
       pending=JSON.parse(sp);
-      paid=JSON.parse(localStorage.getItem(KEY_PAID)||'[]');
-      nextId=parseInt(localStorage.getItem(KEY_NEXTID)||'8');
-      catsPay=JSON.parse(localStorage.getItem(KEY_CATS_PAY)||JSON.stringify(DEFAULT_CATS));
-      catsPaid=JSON.parse(localStorage.getItem(KEY_CATS_PAID)||JSON.stringify(DEFAULT_CATS));
-      todos=JSON.parse(localStorage.getItem(KEY_TODOS)||'[]');
-      nextTodoId=parseInt(localStorage.getItem(KEY_TODO_ID)||'1');
-      shops=JSON.parse(localStorage.getItem(KEY_SHOPS)||'[]');
-      nextShopId=parseInt(localStorage.getItem(KEY_SHOP_ID)||'1');
-      collectedShops=JSON.parse(localStorage.getItem(KEY_COLLECTED)||'[]');
-      recurs=JSON.parse(localStorage.getItem(KEY_RECURS)||'[]');
-      nextRecurId=parseInt(localStorage.getItem(KEY_RECUR_ID)||'1');
-      recurLog=JSON.parse(localStorage.getItem(KEY_RECUR_LOG)||'[]');
+      paid=JSON.parse(localStorage.getItem(K(KEY_SUFFIX.PAID))||'[]');
+      nextId=parseInt(localStorage.getItem(K(KEY_SUFFIX.NEXTID))||'8');
+      catsPay=JSON.parse(localStorage.getItem(K(KEY_SUFFIX.CATS_PAY))||JSON.stringify(DEFAULT_CATS));
+      catsPaid=JSON.parse(localStorage.getItem(K(KEY_SUFFIX.CATS_PAID))||JSON.stringify(DEFAULT_CATS));
+      todos=JSON.parse(localStorage.getItem(K(KEY_SUFFIX.TODOS))||'[]');
+      nextTodoId=parseInt(localStorage.getItem(K(KEY_SUFFIX.TODO_ID))||'1');
+      shops=JSON.parse(localStorage.getItem(K(KEY_SUFFIX.SHOPS))||'[]');
+      nextShopId=parseInt(localStorage.getItem(K(KEY_SUFFIX.SHOP_ID))||'1');
+      collectedShops=JSON.parse(localStorage.getItem(K(KEY_COLLECTED))||'[]');
+      recurs=JSON.parse(localStorage.getItem(K(KEY_RECURS))||'[]');
+      nextRecurId=parseInt(localStorage.getItem(K(KEY_RECUR_ID))||'1');
+      recurLog=JSON.parse(localStorage.getItem(K(KEY_RECUR_LOG))||'[]');
       const savedTz=localStorage.getItem(KEY_TZ);
       if(savedTz) userTz=savedTz;
     }
@@ -992,25 +1017,50 @@ function loadState(){
 
 function saveState(){
   try{
-    localStorage.setItem(KEY_PENDING,JSON.stringify(pending));
-    localStorage.setItem(KEY_PAID,JSON.stringify(paid));
-    localStorage.setItem(KEY_NEXTID,String(nextId));
-    localStorage.setItem(KEY_CATS_PAY,JSON.stringify(catsPay));
-    localStorage.setItem(KEY_CATS_PAID,JSON.stringify(catsPaid));
-    localStorage.setItem(KEY_TODOS,JSON.stringify(todos));
-    localStorage.setItem(KEY_TODO_ID,String(nextTodoId));
-    localStorage.setItem(KEY_SHOPS,JSON.stringify(shops));
-    localStorage.setItem(KEY_SHOP_ID,String(nextShopId));
-    localStorage.setItem(KEY_COLLECTED,JSON.stringify(collectedShops));
-    localStorage.setItem(KEY_RECURS,JSON.stringify(recurs));
-    localStorage.setItem(KEY_RECUR_ID,String(nextRecurId));
-    localStorage.setItem(KEY_RECUR_LOG,JSON.stringify(recurLog));
+    localStorage.setItem(K(KEY_SUFFIX.PENDING),JSON.stringify(pending));
+    localStorage.setItem(K(KEY_SUFFIX.PAID),JSON.stringify(paid));
+    localStorage.setItem(K(KEY_SUFFIX.NEXTID),String(nextId));
+    localStorage.setItem(K(KEY_SUFFIX.CATS_PAY),JSON.stringify(catsPay));
+    localStorage.setItem(K(KEY_SUFFIX.CATS_PAID),JSON.stringify(catsPaid));
+    localStorage.setItem(K(KEY_SUFFIX.TODOS),JSON.stringify(todos));
+    localStorage.setItem(K(KEY_SUFFIX.TODO_ID),String(nextTodoId));
+    localStorage.setItem(K(KEY_SUFFIX.SHOPS),JSON.stringify(shops));
+    localStorage.setItem(K(KEY_SUFFIX.SHOP_ID),String(nextShopId));
+    localStorage.setItem(K(KEY_COLLECTED),JSON.stringify(collectedShops));
+    localStorage.setItem(K(KEY_RECURS),JSON.stringify(recurs));
+    localStorage.setItem(K(KEY_RECUR_ID),String(nextRecurId));
+    localStorage.setItem(K(KEY_RECUR_LOG),JSON.stringify(recurLog));
     // Push to Firebase if signed in
     if(window.__fbSave && window.__fbReady) window.__fbSave(getStateObj());
     const el=document.getElementById('save-indicator');
     if(el){el.classList.add('show');clearTimeout(saveState._t);saveState._t=setTimeout(()=>el.classList.remove('show'),2000);}
   }catch(e){}
 }
+
+// Load a specific user's localStorage snapshot into memory and re-render
+window.__loadStateForUser = function(uid){
+  window.__currentUid = uid;
+  loadState();
+  render();
+};
+
+// Wipe in-memory state and re-render (used on sign-out)
+window.__resetToEmpty = function(){
+  pending=[];paid=[];nextId=1;
+  catsPay=[...DEFAULT_CATS];catsPaid=[...DEFAULT_CATS];
+  todos=[];nextTodoId=1;
+  shops=[];nextShopId=1;
+  collectedShops=[];
+  recurs=[];nextRecurId=1;
+  recurLog=[];
+  render();
+};
+
+// Clear a user's namespaced localStorage keys (called on account switch)
+window.__clearStateForUser = function(uid){
+  const pfx=uid+':';
+  Object.keys(localStorage).filter(k=>k.startsWith(pfx)).forEach(k=>localStorage.removeItem(k));
+};
 
 function fmt(n){return new Intl.NumberFormat('el-GR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
