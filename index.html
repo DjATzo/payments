@@ -157,7 +157,48 @@ body{background:var(--paper);color:var(--ink);font-family:var(--mono);min-height
 .tab.cat-tab.active .badge{background:var(--cat-accent);}
 .tab.todo-tab.active{border-bottom-color:var(--todo-accent);}
 .tab.todo-tab.active .badge{background:var(--todo-accent);}
-.tab.weather-tab.active{border-bottom-color:#0ea5e9;}
+.tab.mail-tab.active{border-bottom-color:#ea4335;}
+.tab.mail-tab.active .badge{background:#ea4335;}
+/* Mail panel */
+.mail-accounts-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;padding-bottom:10px;border-bottom:1.5px solid var(--border);}
+.mail-acc-chip{display:inline-flex;align-items:center;gap:5px;background:white;border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.75rem;cursor:pointer;transition:all .15s;}
+.mail-acc-chip:hover{border-color:#ea4335;}
+.mail-acc-chip.active{background:#ea4335;border-color:#ea4335;color:white;}
+.mail-acc-add{background:none;border:1.5px dashed var(--border);border-radius:20px;padding:6px 12px;font-family:var(--mono);font-size:.72rem;color:#9a9080;cursor:pointer;transition:all .15s;}
+.mail-acc-add:hover{border-color:#ea4335;color:#ea4335;}padding:50px 20px;color:#9a9080;}
+.mail-connect-box .wi{font-size:3rem;display:block;margin-bottom:12px;}
+.mail-connect-box p{font-size:.85rem;margin-bottom:16px;line-height:1.6;}
+.mail-connect-box input{border:1.5px solid var(--border);background:var(--paper);padding:9px 12px;font-family:var(--mono);font-size:.8rem;border-radius:3px;outline:none;width:100%;max-width:400px;margin-bottom:10px;box-sizing:border-box;color:var(--ink);}
+.mail-connect-box input:focus{border-color:#ea4335;}
+.mail-btn-google{background:#ea4335;color:white;border:none;padding:11px 22px;border-radius:4px;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+.mail-btn-google:hover{background:#c5392b;}
+.mail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.mail-user-info{font-size:.78rem;color:#9a9080;display:flex;align-items:center;gap:8px;}
+.mail-search{display:flex;gap:8px;margin-bottom:14px;}
+.mail-search input{flex:1;border:1.5px solid var(--border);background:white;padding:8px 12px;font-family:var(--mono);font-size:.82rem;border-radius:4px;outline:none;color:var(--ink);}
+.mail-search input:focus{border-color:#ea4335;}
+.mail-search button{background:#ea4335;color:white;border:none;padding:8px 16px;border-radius:4px;font-family:var(--mono);font-size:.75rem;cursor:pointer;}
+.mail-filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.mail-filter-btn{padding:5px 12px;border:1.5px solid var(--border);background:white;border-radius:20px;font-family:var(--mono);font-size:.7rem;cursor:pointer;color:#9a9080;transition:all .15s;}
+.mail-filter-btn.active{background:#ea4335;border-color:#ea4335;color:white;}
+.mail-list{display:flex;flex-direction:column;gap:6px;}
+.mail-item{background:white;border:1.5px solid var(--border);border-radius:4px;padding:12px 16px;cursor:pointer;transition:all .15s;}
+.mail-item:hover{border-color:#ea4335;box-shadow:0 2px 8px rgba(234,67,53,.1);}
+.mail-item.unread{border-left:3px solid #ea4335;}
+.mail-item-from{font-size:.78rem;font-weight:600;color:var(--ink);margin-bottom:2px;display:flex;justify-content:space-between;}
+.mail-item-subject{font-size:.82rem;color:var(--ink);margin-bottom:3px;}
+.mail-item.unread .mail-item-subject{font-weight:600;}
+.mail-item-snippet{font-size:.72rem;color:#9a9080;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mail-item-date{font-size:.68rem;color:#9a9080;white-space:nowrap;}
+.mail-loading{text-align:center;padding:40px;color:#9a9080;font-size:.82rem;}
+.mail-detail{background:white;border:1.5px solid var(--border);border-radius:4px;padding:20px;margin-top:8px;}
+.mail-detail-back{background:none;border:none;font-family:var(--mono);font-size:.75rem;color:#9a9080;cursor:pointer;margin-bottom:12px;padding:0;display:flex;align-items:center;gap:4px;}
+.mail-detail-back:hover{color:var(--ink);}
+.mail-detail-subject{font-family:var(--serif);font-size:1.1rem;font-weight:700;margin-bottom:8px;}
+.mail-detail-meta{font-size:.75rem;color:#9a9080;margin-bottom:16px;line-height:1.8;}
+.mail-detail-body{font-size:.82rem;line-height:1.7;color:var(--ink);white-space:pre-wrap;word-break:break-word;}
+.mail-detail-body a{color:#ea4335;}
+.mail-setup-info{background:#fff3cd;border:1.5px solid #ffc107;border-radius:4px;padding:14px;font-size:.75rem;line-height:1.7;margin-bottom:16px;color:#856404;}
 .tab.weather-tab.active .badge{background:#0ea5e9;}
 
 /* ── Weather Panel ─────────────────────────────────────────────────── */
@@ -614,6 +655,7 @@ tr.todo-done .action-btn{text-decoration:none;}
   <button class="tab shop-tab" id="tab-shop" onclick="switchGroup('shop')"> 🛍 Εισπράξεις <span class="badge" id="badge-shop">0</span></button>
   <button class="tab recur-tab" id="tab-recur" onclick="switchGroup('recur')"> 🔁 Επαναλαμβ. <span class="badge" id="badge-recur">0</span></button>
   <button class="tab sum-tab" id="tab-sum" onclick="switchGroup('sum')">   📊 Σύνολο <span class="badge" id="badge-sum">0</span></button>
+  <button class="tab mail-tab" id="tab-mail" onclick="switchGroup('mail')"> 📧 Mail</button>
 </div>
 
 <!-- Sub-tab bar (shown for groups with sub-tabs) -->
@@ -926,6 +968,11 @@ tr.todo-done .action-btn{text-decoration:none;}
   <div id="sum-content"></div>
 </div>
 
+<!-- MAIL -->
+<div class="panel" id="panel-mail">
+  <div id="mail-root"></div>
+</div>
+
 </div><!-- end .app -->
 
 <!-- Settings overlay -->
@@ -980,6 +1027,10 @@ tr.todo-done .action-btn{text-decoration:none;}
     <span class="bnav-icon">📊</span>
     <span>Σύνολο</span>
     <span class="bnav-badge" id="bnav-badge-sum"></span>
+  </button>
+  <button class="bnav-btn" onclick="switchGroup('mail')" id="bnav-mail">
+    <span class="bnav-icon">📧</span>
+    <span>Mail</span>
   </button>
 </nav>
 
@@ -2073,6 +2124,7 @@ const TAB_GROUPS={
   shop:   {subs:['shop','coll']},
   recur:  {subs:[]},
   sum:    {subs:[]},
+  mail:   {subs:[]},
 };
 // which sub-tab was last active per group
 const lastSubTab={pay:'pay', todo:'todo', shop:'shop'};
@@ -2097,6 +2149,7 @@ function switchGroup(group){
     // sync bottom nav
     _syncBnav(group);
     if(group==='weather') renderWeatherTab();
+    if(group==='mail') onMailTabOpen();
   } else {
     // Has sub-tabs: show sub bar with this group's subs
     subtabBar.classList.remove('hidden');
@@ -3276,7 +3329,390 @@ function fqNext(){
   }
 }
 
-// ── Edit Modal ────────────────────────────────────────────────────────────────
+// ── Gmail Multi-Account Integration ──────────────────────────────────────────
+// Accounts stored as: [{email, clientId, token}]
+// Completely independent from Firebase/app sync account
+const KEY_GMAIL_CLIENT='pt_gmail_client_id';
+const KEY_GMAIL_ACCOUNTS='pt_gmail_accounts';
+const GMAIL_SCOPES='https://www.googleapis.com/auth/gmail.readonly';
+
+let _gapiLoaded=false;
+let _gisLoaded=false;
+let _gmailAccounts=[];     // [{email, clientId, token}]
+let _gmailActiveIdx=0;     // which account is selected (-1 = all)
+let _gmailShowAll=false;   // show merged inbox from all accounts
+let _gmailMessages=[];
+let _gmailFilter='inbox';
+let _gmailSearch='';
+let _tokenClients={};
+
+function _loadGmailAccounts(){
+  try{ _gmailAccounts=JSON.parse(localStorage.getItem(KEY_GMAIL_ACCOUNTS)||'[]'); }catch(e){ _gmailAccounts=[]; }
+}
+function _saveGmailAccounts(){
+  localStorage.setItem(KEY_GMAIL_ACCOUNTS,JSON.stringify(_gmailAccounts));
+}
+function _getClientId(){ return localStorage.getItem(KEY_GMAIL_CLIENT)||''; }
+function _saveClientId(id){ localStorage.setItem(KEY_GMAIL_CLIENT,id.trim()); }
+
+function onMailTabOpen(){
+  _loadGmailAccounts();
+  const clientId=_getClientId();
+  if(clientId) _initGmailLibs(clientId);
+  renderMailTab();
+}
+
+function _initGmailLibs(clientId){
+  if(!_gapiLoaded){
+    const s=document.createElement('script'); s.src='https://apis.google.com/js/api.js';
+    s.onload=()=>gapi.load('client',async()=>{
+      await gapi.client.init({});
+      await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest');
+      _gapiLoaded=true;
+    });
+    document.head.appendChild(s);
+  }
+  if(!_gisLoaded){
+    const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client';
+    s.onload=()=>{ _gisLoaded=true; };
+    document.head.appendChild(s);
+  }
+}
+
+function _getOrCreateTokenClient(clientId, onToken){
+  if(!_gisLoaded){ alert('Φόρτωση… δοκίμασε ξανά σε 2 δευτ.'); return; }
+  const tc=google.accounts.oauth2.initTokenClient({
+    client_id:clientId, scope:GMAIL_SCOPES,
+    callback:async(resp)=>{
+      if(resp.error){ console.error(resp); alert('Σφάλμα σύνδεσης: '+resp.error); return; }
+      onToken(resp.access_token);
+    }
+  });
+  tc.requestAccessToken({prompt:'consent'});
+}
+
+function renderMailTab(){
+  const root=document.getElementById('mail-root');
+  if(!root) return;
+  const clientId=_getClientId();
+
+  // Step 1: need client ID
+  if(!clientId){
+    root.innerHTML=`
+      <div class="mail-connect-box">
+        <span class="wi">📧</span>
+        <p><strong>Σύνδεση Gmail</strong><br>
+        Χρειάζεσαι ένα <strong>Google OAuth Client ID</strong> (δωρεάν).<br>
+        Δημιούργησε ένα στο <a href="https://console.cloud.google.com" target="_blank" style="color:#ea4335">Google Cloud Console</a>.</p>
+        <div class="mail-setup-info">
+          <strong>Οδηγίες:</strong><br>
+          1. console.cloud.google.com → Νέο project<br>
+          2. APIs &amp; Services → Enable <em>Gmail API</em><br>
+          3. OAuth consent screen → External → Save<br>
+          4. Credentials → OAuth 2.0 Client ID → Web app<br>
+          5. Authorized JS origins: <code>${location.origin||'file://'}</code><br>
+          6. Αντέγραψε το Client ID παρακάτω
+        </div>
+        <input type="text" id="gmail-client-input" placeholder="xxxx.apps.googleusercontent.com">
+        <br><button class="mail-btn-google" onclick="gmailSaveClientId()">💾 Αποθήκευση & Συνέχεια</button>
+      </div>`;
+    return;
+  }
+
+  // Step 2: show accounts + option to add
+  const activeAcc=_gmailAccounts[_gmailActiveIdx];
+
+  if(!activeAcc || !activeAcc.token){
+    // No connected accounts yet
+    const accChips=_gmailAccounts.map((a,i)=>`
+      <div style="display:inline-flex;align-items:center;gap:6px;background:white;border:1.5px solid var(--border);border-radius:20px;padding:6px 12px;font-size:.75rem;margin:4px;">
+        <span>📧 ${esc(a.email||'Λογαριασμός '+(i+1))}</span>
+        ${a.token?'<span style="color:var(--paid-accent)">●</span>':'<span style="color:#9a9080">○</span>'}
+        ${!a.token?`<button onclick="gmailConnectAccount(${i})" style="background:#ea4335;color:white;border:none;border-radius:10px;padding:2px 8px;font-size:.65rem;cursor:pointer;">Σύνδεση</button>`:''}
+        <button onclick="gmailRemoveAccount(${i})" style="background:none;border:none;color:#9a9080;cursor:pointer;font-size:.8rem;">✕</button>
+      </div>`).join('');
+
+    root.innerHTML=`
+      <div class="mail-connect-box">
+        <span class="wi">📧</span>
+        <p>Σύνδεσε έναν ή περισσότερους Gmail λογαριασμούς.<br>
+        <small style="color:#9a9080">Ανεξάρτητο από τον λογαριασμό συγχρονισμού της εφαρμογής.</small></p>
+        ${accChips?`<div style="margin-bottom:16px;">${accChips}</div>`:''}
+        <button class="mail-btn-google" onclick="gmailAddAccount()">+ Προσθήκη Gmail λογαριασμού</button>
+        <br><br>
+        <button onclick="localStorage.removeItem('${KEY_GMAIL_CLIENT}');renderMailTab()" style="background:none;border:none;color:#9a9080;font-size:.72rem;cursor:pointer;">✕ Αλλαγή Client ID</button>
+      </div>`;
+    return;
+  }
+
+  // Step 3: show inbox with account switcher
+  renderMailInbox(root, clientId);
+}
+
+function gmailSaveClientId(){
+  const val=document.getElementById('gmail-client-input')?.value.trim();
+  if(!val){ alert('Παρακαλώ εισάγετε Client ID.'); return; }
+  _saveClientId(val);
+  _initGmailLibs(val);
+  renderMailTab();
+}
+
+function gmailAddAccount(){
+  const clientId=_getClientId();
+  if(!clientId) return;
+  _initGmailLibs(clientId);
+  setTimeout(()=>{
+    if(!_gisLoaded){ alert('Φόρτωση βιβλιοθηκών… δοκίμασε ξανά σε 2 δευτ.'); return; }
+    const tc=google.accounts.oauth2.initTokenClient({
+      client_id:clientId, scope:GMAIL_SCOPES,
+      callback:async(resp)=>{
+        if(resp.error){ alert('Σφάλμα: '+resp.error); return; }
+        const token=resp.access_token;
+        // Get email address
+        gapi.client.setToken({access_token:token});
+        try{
+          const pr=await gapi.client.gmail.users.getProfile({userId:'me'});
+          const email=pr.result.emailAddress;
+          // Check if already added
+          const existing=_gmailAccounts.findIndex(a=>a.email===email);
+          if(existing>=0){
+            _gmailAccounts[existing].token=token;
+            _gmailActiveIdx=existing;
+          } else {
+            _gmailAccounts.push({email,clientId,token});
+            _gmailActiveIdx=_gmailAccounts.length-1;
+          }
+          _saveGmailAccounts();
+          _gmailMessages=[];
+          // Auto-show all if more than one account
+          if(_gmailAccounts.filter(a=>a.token).length>1){ _gmailShowAll=true; _gmailActiveIdx=-1; }
+          renderMailTab();
+          toast('✅ Συνδέθηκε: '+email,'green');
+        }catch(e){ alert('Αποτυχία λήψης email: '+e.message); }
+      }
+    });
+    tc.requestAccessToken({prompt:'select_account'});
+  },500);
+}
+
+function gmailConnectAccount(idx){
+  const clientId=_getClientId();
+  _initGmailLibs(clientId);
+  setTimeout(()=>{
+    if(!_gisLoaded){ alert('Φόρτωση… δοκίμασε ξανά.'); return; }
+    const tc=google.accounts.oauth2.initTokenClient({
+      client_id:clientId, scope:GMAIL_SCOPES,
+      callback:async(resp)=>{
+        if(resp.error) return;
+        _gmailAccounts[idx].token=resp.access_token;
+        _gmailActiveIdx=idx;
+        _saveGmailAccounts();
+        _gmailMessages=[];
+        renderMailTab();
+      }
+    });
+    tc.requestAccessToken({prompt:'select_account'});
+  },500);
+}
+
+function gmailRemoveAccount(idx){
+  const a=_gmailAccounts[idx];
+  if(!confirm(`Αφαίρεση λογαριασμού${a.email?' '+a.email:''}?`)) return;
+  if(a.token) try{ google.accounts.oauth2.revoke(a.token,()=>{}); }catch(e){}
+  _gmailAccounts.splice(idx,1);
+  _saveGmailAccounts();
+  _gmailActiveIdx=Math.min(_gmailActiveIdx,Math.max(0,_gmailAccounts.length-1));
+  _gmailMessages=[];
+  renderMailTab();
+}
+
+function gmailSwitchAccount(idx){
+  if(idx==='all'){
+    _gmailShowAll=true; _gmailActiveIdx=-1;
+  } else {
+    _gmailShowAll=false; _gmailActiveIdx=idx;
+    const acc=_gmailAccounts[idx];
+    if(acc?.token) gapi.client.setToken({access_token:acc.token});
+  }
+  _gmailMessages=[]; _gmailFilter='inbox'; _gmailSearch='';
+  const r=document.getElementById('mail-root');
+  if(r) renderMailInbox(r,_getClientId());
+}
+
+function renderMailInbox(root, clientId){
+  const acc=_gmailAccounts[_gmailActiveIdx];
+  const connectedAccounts=_gmailAccounts.filter(a=>a.token);
+
+  // Account switcher chips
+  const allChip=connectedAccounts.length>1
+    ?`<div class="mail-acc-chip${_gmailShowAll?' active':''}" onclick="gmailSwitchAccount('all')">📥 Όλα (${connectedAccounts.length})</div>`
+    :'';
+  const chips=_gmailAccounts.map((a,i)=>`
+    <div class="mail-acc-chip${!_gmailShowAll&&i===_gmailActiveIdx?' active':''}" onclick="gmailSwitchAccount(${i})">
+      📧 ${esc((a.email||'Λογ.'+(i+1)).split('@')[0])}
+      ${!a.token?'<span style="opacity:.5">○</span>':''}
+    </div>`).join('');
+
+  const filters=[
+    {id:'inbox',label:'📥 Inbox'},{id:'unread',label:'🔴 Αδιάβαστα'},
+    {id:'starred',label:'⭐ Starred'},{id:'sent',label:'📤 Sent'},
+  ];
+  const filterHtml=filters.map(f=>`<button class="mail-filter-btn${_gmailFilter===f.id?' active':''}" onclick="setMailFilter('${f.id}')">${f.label}</button>`).join('');
+
+  const headerLabel=_gmailShowAll
+    ?`📥 Όλοι οι λογαριασμοί (${connectedAccounts.map(a=>a.email).join(', ')})`
+    :(acc?.email||'');
+
+  root.innerHTML=`
+    <div class="mail-accounts-bar">
+      ${allChip}${chips}
+      <button class="mail-acc-add" onclick="gmailAddAccount()">+ Λογαριασμός</button>
+    </div>
+    <div class="mail-header">
+      <div class="mail-user-info" style="font-size:.72rem;">📧 <strong>${esc(headerLabel)}</strong></div>
+      ${!_gmailShowAll?`<button class="btn btn-ghost" style="font-size:.7rem;padding:6px 12px;" onclick="gmailRemoveAccount(${_gmailActiveIdx})">Αποσύνδεση</button>`:''}
+    </div>
+    <div class="mail-search">
+      <input type="text" id="mail-search-input" placeholder="🔍 Αναζήτηση…" value="${_gmailSearch}" onkeydown="if(event.key==='Enter')doMailSearch()">
+      <button onclick="doMailSearch()">🔍</button>
+    </div>
+    <div class="mail-filters">${filterHtml}</div>
+    <div id="mail-list-area"><div class="mail-loading">⏳ Φόρτωση emails…</div></div>`;
+
+  loadGmailMessages();
+}
+
+function setMailFilter(f){ _gmailFilter=f; _gmailSearch=''; const r=document.getElementById('mail-root'); if(r&&_gmailAccounts[_gmailActiveIdx]?.token) renderMailInbox(r,_getClientId()); }
+function doMailSearch(){ _gmailSearch=document.getElementById('mail-search-input')?.value.trim()||''; loadGmailMessages(); }
+
+async function loadGmailMessages(){
+  const area=document.getElementById('mail-list-area');
+  if(!area) return;
+  area.innerHTML='<div class="mail-loading">⏳ Φόρτωση…</div>';
+  try{
+    const q=_gmailSearch||({inbox:'in:inbox',unread:'is:unread',starred:'is:starred',sent:'in:sent'}[_gmailFilter]||'in:inbox');
+
+    if(_gmailShowAll){
+      // Fetch from all connected accounts in parallel
+      const connectedAccounts=_gmailAccounts.filter(a=>a.token);
+      if(!connectedAccounts.length){ area.innerHTML='<div class="mail-loading">📭 Δεν υπάρχουν συνδεδεμένοι λογαριασμοί.</div>'; return; }
+
+      const allResults=await Promise.all(connectedAccounts.map(async acc=>{
+        try{
+          gapi.client.setToken({access_token:acc.token});
+          const listRes=await gapi.client.gmail.users.messages.list({userId:'me',q,maxResults:20});
+          const msgs=listRes.result.messages||[];
+          const details=await Promise.all(msgs.map(m=>
+            gapi.client.gmail.users.messages.get({userId:'me',id:m.id,format:'metadata',metadataHeaders:['From','Subject','Date']})
+              .then(r=>({...r.result, _accountEmail:acc.email})).catch(()=>null)
+          ));
+          return details.filter(Boolean);
+        }catch(e){ return []; }
+      }));
+
+      // Merge and sort by date desc
+      const merged=allResults.flat().sort((a,b)=>{
+        const da=new Date(getHeader(a,'date')||0);
+        const db=new Date(getHeader(b,'date')||0);
+        return db-da;
+      });
+      _gmailMessages=merged;
+    } else {
+      const acc=_gmailAccounts[_gmailActiveIdx];
+      if(!acc?.token){ area.innerHTML='<div class="mail-loading">🔒 Μη συνδεδεμένος λογαριασμός.</div>'; return; }
+      gapi.client.setToken({access_token:acc.token});
+      const listRes=await gapi.client.gmail.users.messages.list({userId:'me',q,maxResults:30});
+      const msgs=listRes.result.messages||[];
+      const details=await Promise.all(msgs.map(m=>
+        gapi.client.gmail.users.messages.get({userId:'me',id:m.id,format:'metadata',metadataHeaders:['From','Subject','Date']})
+          .then(r=>({...r.result, _accountEmail:acc.email})).catch(()=>null)
+      ));
+      _gmailMessages=details.filter(Boolean);
+    }
+
+    if(!_gmailMessages.length){ area.innerHTML='<div class="mail-loading">📭 Δεν βρέθηκαν emails.</div>'; return; }
+    renderMailList(area);
+  }catch(e){
+    if(e.status===401){
+      if(!_gmailShowAll) _gmailAccounts[_gmailActiveIdx].token=null;
+      _saveGmailAccounts();
+      area.innerHTML=`<div class="mail-loading">🔒 Η σύνδεση έληξε. <button onclick="gmailConnectAccount(${_gmailActiveIdx})" style="background:#ea4335;color:white;border:none;padding:6px 14px;border-radius:3px;font-size:.75rem;cursor:pointer;">Επανασύνδεση</button></div>`;
+    } else {
+      area.innerHTML=`<div class="mail-loading">⚠ ${e.message||'Σφάλμα φόρτωσης'}</div>`;
+    }
+  }
+}
+
+function getHeader(msg,name){ return (msg.payload?.headers||[]).find(h=>h.name.toLowerCase()===name.toLowerCase())?.value||''; }
+
+function renderMailList(area){
+  if(!_gmailMessages.length){ area.innerHTML='<div class="mail-loading">📭 Άδεια.</div>'; return; }
+  const html=_gmailMessages.map(msg=>{
+    const from=getHeader(msg,'from'); const subject=getHeader(msg,'subject')||'(χωρίς θέμα)';
+    const date=getHeader(msg,'date'); const fromName=from.replace(/<.*>/,'').trim()||from;
+    const isUnread=msg.labelIds?.includes('UNREAD');
+    const dateObj=date?new Date(date):null;
+    const dateLbl=dateObj?dateObj.toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    const accBadge=_gmailShowAll&&msg._accountEmail
+      ?`<span style="font-size:.6rem;background:#f1f5f9;color:#64748b;border-radius:8px;padding:1px 6px;margin-right:4px;">${esc(msg._accountEmail.split('@')[0])}</span>`
+      :'';
+    return`<div class="mail-item${isUnread?' unread':''}" onclick="viewMail('${msg.id}','${msg._accountEmail||''}')">
+      <div class="mail-item-from"><span>${accBadge}${esc(fromName.slice(0,40))}</span><span class="mail-item-date">${dateLbl}</span></div>
+      <div class="mail-item-subject">${esc(subject.slice(0,80))}</div>
+      <div class="mail-item-snippet">${esc((msg.snippet||'').slice(0,120))}</div>
+    </div>`;
+  }).join('');
+  area.innerHTML=`<div class="mail-list">${html}</div>`;
+}
+
+async function viewMail(id, accountEmail){
+  const area=document.getElementById('mail-list-area');
+  if(!area) return;
+  area.innerHTML='<div class="mail-loading">⏳ Φόρτωση email…</div>';
+  try{
+    // Switch to correct account token if in all-mode
+    if(accountEmail){
+      const acc=_gmailAccounts.find(a=>a.email===accountEmail);
+      if(acc?.token) gapi.client.setToken({access_token:acc.token});
+    }
+    const res=await gapi.client.gmail.users.messages.get({userId:'me',id,format:'full'});
+    const msg=res.result;
+    const from=getHeader(msg,'from'); const subject=getHeader(msg,'subject')||'(χωρίς θέμα)';
+    const date=getHeader(msg,'date'); const to=getHeader(msg,'to');
+    const dateLbl=date?new Date(date).toLocaleString('el-GR'):'';
+    let body='';
+    function extractBody(part){
+      if(!part) return;
+      if(part.mimeType==='text/plain'&&part.body?.data) body=atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'));
+      else if(part.mimeType==='text/html'&&part.body?.data&&!body){
+        const html=atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'));
+        body=html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      }
+      if(part.parts) part.parts.forEach(extractBody);
+    }
+    extractBody(msg.payload);
+    const accBadge=accountEmail?`<span style="font-size:.7rem;background:#f1f5f9;color:#64748b;border-radius:8px;padding:2px 8px;margin-left:6px;">${esc(accountEmail)}</span>`:'';
+    area.innerHTML=`
+      <button class="mail-detail-back" onclick="loadGmailMessages()">← Πίσω</button>
+      <div class="mail-detail">
+        <div class="mail-detail-subject">${esc(subject)}${accBadge}</div>
+        <div class="mail-detail-meta"><strong>Από:</strong> ${esc(from)}<br><strong>Προς:</strong> ${esc(to)}<br><strong>Ημερομηνία:</strong> ${dateLbl}</div>
+        <div class="mail-detail-body">${esc(body)}</div>
+      </div>`;
+    const m=_gmailMessages.find(x=>x.id===id);
+    if(m) m.labelIds=m.labelIds?.filter(l=>l!=='UNREAD');
+  }catch(e){
+    area.innerHTML=`<div class="mail-loading">⚠ ${e.message}</div><button class="mail-detail-back" onclick="loadGmailMessages()">← Πίσω</button>`;
+  }
+}
+
+// Called when mail tab is opened
+function onMailTabOpen(){
+  _loadGmailAccounts();
+  const clientId=_getClientId();
+  if(clientId) _initGmailLibs(clientId);
+  renderMailTab();
+}
 function openEdit(type, id){
   const overlay=document.getElementById('edit-modal-overlay');
   const body=document.getElementById('edit-modal-body');
