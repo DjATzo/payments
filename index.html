@@ -1161,10 +1161,16 @@ window.__clearStateForUser = function(uid){
 
 function fmt(n){return new Intl.NumberFormat('el-GR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function parseLocalDate(d){
+  if(!d) return null;
+  const [y,m,day]=String(d).split('-').map(Number);
+  return new Date(y, m-1, day);
+}
+
 function daysLabel(d){
   if(!d) return '';
-  const due=new Date(d), now=new Date(); now.setHours(0,0,0,0);
-  const diff=Math.ceil((due-now)/86400000);
+  const due=parseLocalDate(d), now=new Date(); now.setHours(0,0,0,0);
+  const diff=Math.round((due-now)/86400000);
   if(diff===0) return '<span style="color:var(--accent);font-weight:600;font-size:.7rem;margin-left:4px">σήμερα</span>';
   if(diff===1) return '<span style="color:#b85c00;font-size:.7rem;margin-left:4px">αύριο</span>';
   if(diff<0)   return `<span style="color:var(--accent);font-weight:600;font-size:.7rem;margin-left:4px">${Math.abs(diff)}μ πριν</span>`;
@@ -1173,8 +1179,8 @@ function daysLabel(d){
 
 function duePill(d){
   if(!d)return'<span class="due-chip">—</span>';
-  const due=new Date(d),now=new Date();now.setHours(0,0,0,0);
-  const diff=Math.ceil((due-now)/86400000);
+  const due=parseLocalDate(d),now=new Date();now.setHours(0,0,0,0);
+  const diff=Math.round((due-now)/86400000);
   const lbl=due.toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'});
   const days=daysLabel(d);
   if(diff<0)return`<span class="due-chip overdue">⚠ ${lbl}${days}</span>`;
