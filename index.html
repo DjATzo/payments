@@ -709,7 +709,27 @@ tr.todo-done .action-btn{text-decoration:none;}
 
 <!-- ΕΡΓΑΣΙΕΣ (TO DO) -->
 <div class="panel" id="panel-todo">
-  <button class="btn btn-todo-add" onclick="toggleTodoForm()">+ Νέα Εργασία</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;">
+    <button class="btn btn-todo-add" style="margin-bottom:0;" onclick="toggleTodoForm()">+ Νέα Εργασία</button>
+    <button class="btn" style="background:#7c3aed;color:white;margin-bottom:0;" onclick="toggleImportFormFor('todo')">📎 Εισαγωγή από αρχείο</button>
+  </div>
+  <div class="add-form" id="import-form-todo" style="margin-top:12px;">
+    <h3>📎 Εισαγωγή Εργασιών από Αρχείο</h3>
+    <div style="background:#e0f2fe;border:1.5px solid #7dd3fc;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;">
+      <strong style="color:#0369a1;">📊 Επικεφαλίδες Excel/CSV:</strong><br>
+      <code style="display:inline-block;margin-top:6px;background:white;border:1px solid #7dd3fc;border-radius:3px;padding:3px 8px;font-size:.78rem;color:#1a1a2e;">
+        Όνομα &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Πληροφορίες
+      </code>
+    </div>
+    <div class="form-field" style="margin-bottom:12px;"><label>Αρχείο *</label><input type="file" id="import-file-todo" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.xlsx,.xls" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;border-radius:3px;"></div>
+    <div class="form-field" style="margin-bottom:14px;"><label>Οδηγίες AI (προαιρετικό)</label><input type="text" id="import-hint-todo" placeholder="" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;width:100%;"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="toggleImportFormFor('todo')">Ακύρωση</button>
+      <button class="btn" id="import-btn-todo" style="background:#7c3aed;color:white;" onclick="runImportFor('todo')">🔍 Ανάλυση</button>
+    </div>
+    <div id="import-status-todo" style="display:none;margin-top:12px;"></div>
+    <div id="import-preview-todo" style="display:none;margin-top:12px;"></div>
+  </div>
   <div class="add-form" id="todo-form">
     <h3>Νέα Εργασία</h3>
     <div class="form-grid-todo">
@@ -746,7 +766,27 @@ tr.todo-done .action-btn{text-decoration:none;}
 
 <!-- ΨΩΝΙΑ -->
 <div class="panel" id="panel-shop">
-  <button class="btn" style="background:#8b4513;color:white;margin-bottom:16px;" onclick="toggleShopForm()">+ Νέα Εγγραφή</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;">
+    <button class="btn" style="background:#8b4513;color:white;margin-bottom:0;" onclick="toggleShopForm()">+ Νέα Εγγραφή</button>
+    <button class="btn" style="background:#7c3aed;color:white;margin-bottom:0;" onclick="toggleImportFormFor('shop')">📎 Εισαγωγή από αρχείο</button>
+  </div>
+  <div class="add-form" id="import-form-shop" style="margin-top:12px;">
+    <h3>📎 Εισαγωγή Εισπράξεων από Αρχείο</h3>
+    <div style="background:#fce7f3;border:1.5px solid #f9a8d4;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;">
+      <strong style="color:#9d174d;">📊 Επικεφαλίδες Excel/CSV:</strong><br>
+      <code style="display:inline-block;margin-top:6px;background:white;border:1px solid #f9a8d4;border-radius:3px;padding:3px 8px;font-size:.78rem;color:#1a1a2e;">
+        Περιγραφή &nbsp;|&nbsp; Ποσό &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Σημειώσεις
+      </code>
+    </div>
+    <div class="form-field" style="margin-bottom:12px;"><label>Αρχείο *</label><input type="file" id="import-file-shop" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.xlsx,.xls" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;border-radius:3px;"></div>
+    <div class="form-field" style="margin-bottom:14px;"><label>Οδηγίες AI (προαιρετικό)</label><input type="text" id="import-hint-shop" placeholder="" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;width:100%;"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="toggleImportFormFor('shop')">Ακύρωση</button>
+      <button class="btn" id="import-btn-shop" style="background:#7c3aed;color:white;" onclick="runImportFor('shop')">🔍 Ανάλυση</button>
+    </div>
+    <div id="import-status-shop" style="display:none;margin-top:12px;"></div>
+    <div id="import-preview-shop" style="display:none;margin-top:12px;"></div>
+  </div>
   <div class="add-form" id="shop-form">
     <h3>Νέα Εγγραφή — Χρήματα που μου χρωστάνε 💸</h3>
     <div class="form-grid">
@@ -783,7 +823,28 @@ tr.todo-done .action-btn{text-decoration:none;}
 
 <!-- ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΑ -->
 <div class="panel" id="panel-recur">
-  <button class="btn" style="background:#6d28d9;color:white;margin-bottom:16px;" onclick="toggleRecurForm()">+ Νέο Επαναλαμβανόμενο</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;">
+    <button class="btn" style="background:#6d28d9;color:white;margin-bottom:0;" onclick="toggleRecurForm()">+ Νέο Επαναλαμβανόμενο</button>
+    <button class="btn" style="background:#7c3aed;color:white;margin-bottom:0;" onclick="toggleImportFormFor('recur')">📎 Εισαγωγή από αρχείο</button>
+  </div>
+  <div class="add-form" id="import-form-recur" style="margin-top:12px;">
+    <h3>📎 Εισαγωγή Επαναλαμβανόμενων από Αρχείο</h3>
+    <div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;">
+      <strong style="color:#5b21b6;">📊 Επικεφαλίδες Excel/CSV:</strong><br>
+      <code style="display:inline-block;margin-top:6px;background:white;border:1px solid #c4b5fd;border-radius:3px;padding:3px 8px;font-size:.78rem;color:#1a1a2e;">
+        Όνομα &nbsp;|&nbsp; Ποσό &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Συχνότητα &nbsp;|&nbsp; Σημειώσεις
+      </code><br>
+      <span style="color:#7c3aed;margin-top:4px;display:block;">Συχνότητα: <em>ημερήσιο, εβδομαδιαίο, μηνιαίο</em> (ή αφήστε κενό για ημερήσιο)</span>
+    </div>
+    <div class="form-field" style="margin-bottom:12px;"><label>Αρχείο *</label><input type="file" id="import-file-recur" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.xlsx,.xls" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;border-radius:3px;"></div>
+    <div class="form-field" style="margin-bottom:14px;"><label>Οδηγίες AI (προαιρετικό)</label><input type="text" id="import-hint-recur" placeholder="" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;color:var(--ink);border-radius:3px;outline:none;width:100%;"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="toggleImportFormFor('recur')">Ακύρωση</button>
+      <button class="btn" id="import-btn-recur" style="background:#7c3aed;color:white;" onclick="runImportFor('recur')">🔍 Ανάλυση</button>
+    </div>
+    <div id="import-status-recur" style="display:none;margin-top:12px;"></div>
+    <div id="import-preview-recur" style="display:none;margin-top:12px;"></div>
+  </div>
   <div class="add-form" id="recur-form">
     <h3>Νέο Επαναλαμβανόμενο</h3>
     <div class="form-grid-2" style="margin-bottom:10px;">
@@ -2604,7 +2665,225 @@ function renderWeatherData(root, city, weather){
     </div>`;
 }
 
-// ── Import from file (AI-powered) ────────────────────────────────────────────
+// ── Generic import for todo / shop / recur ────────────────────────────────────
+const _importFormOpen={todo:false,shop:false,recur:false};
+function toggleImportFormFor(type){
+  _importFormOpen[type]=!_importFormOpen[type];
+  const f=document.getElementById('import-form-'+type);
+  f.classList.toggle('open',_importFormOpen[type]);
+  if(_importFormOpen[type]){
+    document.getElementById('import-status-'+type).style.display='none';
+    document.getElementById('import-preview-'+type).style.display='none';
+    document.getElementById('import-file-'+type).value='';
+  }
+}
+
+async function runImportFor(type){
+  const fileInput=document.getElementById('import-file-'+type);
+  const hint=document.getElementById('import-hint-'+type).value.trim();
+  const statusEl=document.getElementById('import-status-'+type);
+  const previewEl=document.getElementById('import-preview-'+type);
+  const btn=document.getElementById('import-btn-'+type);
+
+  if(!fileInput.files.length){
+    statusEl.innerHTML='<span class="import-status-err">⚠ Παρακαλώ επιλέξτε αρχείο.</span>';
+    statusEl.style.display='block'; return;
+  }
+  const file=fileInput.files[0];
+  const ext=file.name.split('.').pop().toLowerCase();
+  btn.disabled=true; btn.textContent='⏳ Ανάλυση…';
+  statusEl.innerHTML='<span class="import-status-ok">⏳ Επεξεργασία…</span>';
+  statusEl.style.display='block'; previewEl.style.display='none';
+
+  try{
+    let items=null;
+    if(['xlsx','xls','csv'].includes(ext)){
+      items=await parseSpreadsheetFor(file, type);
+      if(items===null) statusEl.innerHTML='<span class="import-status-ok">⏳ Χρησιμοποιώ AI…</span>';
+    }
+    if(items===null) items=await parseWithAIFor(file, ext, hint, type);
+
+    if(!Array.isArray(items)||!items.length){
+      statusEl.innerHTML='<span class="import-status-err">⚠ Δεν βρέθηκαν εγγραφές.</span>';
+      btn.disabled=false; btn.textContent='🔍 Ανάλυση'; return;
+    }
+    statusEl.innerHTML=`<span class="import-status-ok">✅ Βρέθηκαν ${items.length} εγγραφές:</span>`;
+    renderImportPreviewFor(items, type);
+  }catch(e){
+    statusEl.innerHTML=`<span class="import-status-err">⚠ Σφάλμα: ${e.message}</span>`;
+  }
+  btn.disabled=false; btn.textContent='🔍 Ανάλυση';
+}
+
+async function parseSpreadsheetFor(file, type){
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array',cellDates:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{raw:false,defval:''});
+  if(!rows.length) return [];
+
+  const MAPS={
+    todo:{
+      'όνομα':'name','ονομα':'name','name':'name','εργασία':'name','εργασια':'name','title':'name',
+      'ημερομηνία':'date','ημερομηνια':'date','date':'date',
+      'κατηγορία':'cat','κατηγορια':'cat','category':'cat','cat':'cat',
+      'πληροφορίες':'info','πληροφοριες':'info','info':'info','notes':'info','σημειώσεις':'info','σημειωσεις':'info',
+    },
+    shop:{
+      'περιγραφή':'desc','περιγραφη':'desc','description':'desc','desc':'desc','name':'desc','ονομα':'desc',
+      'ποσό':'amount','ποσο':'amount','amount':'amount','τιμή':'amount','τιμη':'amount',
+      'ημερομηνία':'date','ημερομηνια':'date','date':'date',
+      'κατηγορία':'cat','κατηγορια':'cat','category':'cat','cat':'cat',
+      'σημειώσεις':'notes','σημειωσεις':'notes','notes':'notes',
+    },
+    recur:{
+      'όνομα':'name','ονομα':'name','name':'name','title':'name',
+      'ποσό':'amount','ποσο':'amount','amount':'amount',
+      'κατηγορία':'cat','κατηγορια':'cat','category':'cat','cat':'cat',
+      'συχνότητα':'freq','συχνοτητα':'freq','freq':'freq','frequency':'freq','τύπος':'freq','τυπος':'freq',
+      'σημειώσεις':'notes','σημειωσεις':'notes','notes':'notes',
+    },
+  };
+
+  const headerMap=MAPS[type]||{};
+  const keys=Object.keys(rows[0]||{});
+  const colMap={};
+  keys.forEach(k=>{
+    const norm=k.trim().toLowerCase().replace(/\s+/g,'');
+    const mapped=headerMap[norm];
+    if(mapped) colMap[k]=mapped;
+  });
+
+  const requiredField=type==='recur'?'name':type==='todo'?'name':'desc';
+  if(!Object.values(colMap).includes(requiredField)) return null;
+
+  return rows.map(row=>{
+    const item={name:'',desc:'',amount:0,date:'',due:'',cat:'',notes:'',info:'',freq:'daily'};
+    Object.entries(colMap).forEach(([col,field])=>{
+      let val=row[col];
+      if(field==='amount'){
+        val=String(val).replace(/[€,\s]/g,'').replace(',','.');
+        item.amount=parseFloat(val)||0;
+      } else if(field==='date'||field==='due'){
+        if(val){ const d=new Date(val); if(!isNaN(d)) item.date=item.due=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; else item.date=item.due=String(val).trim(); }
+      } else if(field==='freq'){
+        const v=String(val||'').toLowerCase().trim();
+        if(v.includes('εβδ')||v.includes('week')) item.freq='weekly';
+        else if(v.includes('μην')||v.includes('month')) item.freq='monthly';
+        else item.freq='daily';
+      } else { item[field]=String(val||'').trim(); }
+    });
+    return item;
+  }).filter(i=>i.name||i.desc);
+}
+
+async function parseWithAIFor(file, ext, hint, type){
+  const typeLabels={todo:'εργασίες/tasks',shop:'εισπράξεις/χρήματα που χρωστάνε',recur:'επαναλαμβανόμενες υποχρεώσεις'};
+  const fieldDescs={
+    todo:'name (string), date (YYYY-MM-DD ή ""), cat (string), info (string)',
+    shop:'desc (string), amount (number €), date (YYYY-MM-DD ή ""), cat (string), notes (string)',
+    recur:'name (string), amount (number ή null), cat (string), freq (daily|weekly|monthly), notes (string)',
+  };
+  const systemPrompt=`Εξήγαγε ${typeLabels[type]} από το αρχείο. Επίστρεψε ΜΟΝΟ JSON array. Κάθε αντικείμενο: ${fieldDescs[type]}. ${hint?'Οδηγίες: '+hint:''} Αν δεν βρεις τίποτα επίστρεψε [].`;
+
+  let messageContent;
+  if(['png','jpg','jpeg','webp','gif'].includes(ext)){
+    const b64=await fileToBase64(file);
+    messageContent=[{type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}},{type:'text',text:'Εξήγαγε.'}];
+  } else if(ext==='pdf'){
+    const b64=await fileToBase64(file);
+    messageContent=[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Εξήγαγε.'}];
+  } else {
+    const text=await file.text();
+    messageContent=[{type:'text',text:text.slice(0,20000)}];
+  }
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:systemPrompt,messages:[{role:'user',content:messageContent}]})});
+  const data=await res.json();
+  const raw=data.content?.map(c=>c.text||'').join('').trim().replace(/^```[\w]*\n?/,'').replace(/\n?```$/,'').trim();
+  try{ return JSON.parse(raw); } catch(e){ throw new Error('AI: μη έγκυρο JSON'); }
+}
+
+function renderImportPreviewFor(items, type){
+  const previewEl=document.getElementById('import-preview-'+type);
+  const cats=[...new Set([...catsPay,...DEFAULT_CATS])].filter(Boolean);
+  const catOptions=cats.map(c=>`<option value="${esc(c)}">`).join('');
+  const freqOptions=['daily','weekly','monthly'].map(f=>`<option value="${f}">${f==='daily'?'Ημερήσιο':f==='weekly'?'Εβδομαδιαίο':'Μηνιαίο'}`).join('');
+
+  const html=items.map((item,i)=>{
+    let fields='';
+    if(type==='todo'){
+      fields=`
+        <div class="import-preview-field" style="flex:2;min-width:120px;"><label>Όνομα</label><input type="text" id="imp2-name-${i}" value="${esc(item.name||'')}"></div>
+        <div class="import-preview-field" style="flex:1;min-width:110px;"><label>Ημερομηνία</label><input type="date" id="imp2-date-${i}" value="${item.date||''}"></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Κατηγορία</label><input type="text" id="imp2-cat-${i}" value="${esc(item.cat||'')}" list="imp2-catlist-${i}"><datalist id="imp2-catlist-${i}">${catOptions}</datalist></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Πληροφορίες</label><input type="text" id="imp2-info-${i}" value="${esc(item.info||'')}"></div>`;
+    } else if(type==='shop'){
+      fields=`
+        <div class="import-preview-field" style="flex:2;min-width:120px;"><label>Περιγραφή</label><input type="text" id="imp2-desc-${i}" value="${esc(item.desc||'')}"></div>
+        <div class="import-preview-field" style="flex:1;min-width:70px;"><label>Ποσό €</label><input type="number" id="imp2-amt-${i}" value="${item.amount||''}" step="0.01"></div>
+        <div class="import-preview-field" style="flex:1;min-width:110px;"><label>Ημερομηνία</label><input type="date" id="imp2-date-${i}" value="${item.date||''}"></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Κατηγορία</label><input type="text" id="imp2-cat-${i}" value="${esc(item.cat||'')}" list="imp2-catlist-${i}"><datalist id="imp2-catlist-${i}">${catOptions}</datalist></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Σημειώσεις</label><input type="text" id="imp2-notes-${i}" value="${esc(item.notes||'')}"></div>`;
+    } else {
+      fields=`
+        <div class="import-preview-field" style="flex:2;min-width:120px;"><label>Όνομα</label><input type="text" id="imp2-name-${i}" value="${esc(item.name||'')}"></div>
+        <div class="import-preview-field" style="flex:1;min-width:70px;"><label>Ποσό €</label><input type="number" id="imp2-amt-${i}" value="${item.amount||''}" step="0.01"></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Κατηγορία</label><input type="text" id="imp2-cat-${i}" value="${esc(item.cat||'')}" list="imp2-catlist-${i}"><datalist id="imp2-catlist-${i}">${catOptions}</datalist></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Σημειώσεις</label><input type="text" id="imp2-notes-${i}" value="${esc(item.notes||'')}"></div>
+        <div style="flex:1;min-width:120px;font-size:.72rem;color:#7c3aed;background:#ede9fe;border-radius:4px;padding:6px 8px;align-self:center;">🔁 Θα ρυθμίσεις τη συχνότητα μετά</div>`;
+    }
+    return `<div class="import-preview-item" id="imp2-row-${i}"><input type="checkbox" class="import-check" id="imp2-chk-${i}" checked>${fields}</div>`;
+  }).join('');
+
+  previewEl.innerHTML=html+`<div class="import-actions"><button class="btn btn-primary" onclick="confirmImportFor(${items.length},'${type}')">✅ Εισαγωγή επιλεγμένων</button><button class="btn btn-ghost" onclick="document.getElementById('import-preview-${type}').style.display='none'">Ακύρωση</button></div>`;
+  previewEl.style.display='block';
+}
+
+function confirmImportFor(count, type){
+  let imported=0;
+  for(let i=0;i<count;i++){
+    const chk=document.getElementById('imp2-chk-'+i);
+    if(!chk||!chk.checked) continue;
+    if(type==='todo'){
+      const name=(document.getElementById('imp2-name-'+i)?.value||'').trim();
+      if(!name) continue;
+      const date=document.getElementById('imp2-date-'+i)?.value||'';
+      const cat=(document.getElementById('imp2-cat-'+i)?.value||'').trim();
+      const info=(document.getElementById('imp2-info-'+i)?.value||'').trim();
+      todos.push({id:nextTodoId++,name,date,cat,info,done:false,createdAt:new Date().toISOString()});
+    } else if(type==='shop'){
+      const desc=(document.getElementById('imp2-desc-'+i)?.value||'').trim();
+      if(!desc) continue;
+      const amount=parseFloat(document.getElementById('imp2-amt-'+i)?.value)||0;
+      const date=document.getElementById('imp2-date-'+i)?.value||'';
+      const cat=(document.getElementById('imp2-cat-'+i)?.value||'').trim();
+      const notes=(document.getElementById('imp2-notes-'+i)?.value||'').trim();
+      shops.push({id:nextShopId++,desc,amount,date,cat,notes,origin:'shop',createdAt:new Date().toISOString()});
+    } else if(type==='recur'){
+      const name=(document.getElementById('imp2-name-'+i)?.value||'').trim();
+      if(!name) continue;
+      const amount=parseFloat(document.getElementById('imp2-amt-'+i)?.value)||null;
+      const cat=(document.getElementById('imp2-cat-'+i)?.value||'').trim();
+      const notes=(document.getElementById('imp2-notes-'+i)?.value||'').trim();
+      // Save with placeholder freq — user will set it via form
+      recurs.push({id:nextRecurId++,name,amount,cat,notes,freq:{type:'daily'},_needsFreq:true,createdAt:new Date().toISOString()});
+    }
+    imported++;
+  }
+  if(imported){
+    saveState();render();
+    toast(`✅ Εισήχθησαν ${imported} εγγραφές`,'green');
+    toggleImportFormFor(type);
+    // For recur: open freq editor for each imported item
+    if(type==='recur'){
+      const needsFreq=recurs.filter(r=>r._needsFreq);
+      if(needsFreq.length) openFreqEditorQueue(needsFreq);
+    }
+  } else {
+    document.getElementById('import-status-'+type).innerHTML='<span class="import-status-err">⚠ Καμία επιλεγμένη εγγραφή.</span>';
+    document.getElementById('import-status-'+type).style.display='block';
+  }
+}
 let importFormOpen=false;
 function toggleImportForm(){
   importFormOpen=!importFormOpen;
@@ -2835,6 +3114,106 @@ function confirmImport(count){
 }
 
 // ── PWA: Inline Manifest ──────────────────────────────────────────────────────
+// ── Freq editor queue (for imported recurs) ────────────────────────────────────
+let _freqQueue=[];
+function openFreqEditorQueue(items){
+  _freqQueue=[...items];
+  openNextFreqEditor();
+}
+function openNextFreqEditor(){
+  if(!_freqQueue.length) return;
+  const r=_freqQueue[0];
+  // Pre-fill the recur form with this item's data
+  switchGroup('recur');
+  // Show a modal overlay prompting user to set freq for this item
+  let modal=document.getElementById('freq-editor-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='freq-editor-modal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(26,26,46,.6);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;';
+    document.body.appendChild(modal);
+  }
+  // Build freq buttons same as main form
+  const freqBtns=['daily','range','weekly','monthly'].map(f=>`<button class="recur-freq-btn" id="fq-btn-${f}" onclick="fqSetFreq('${f}')" style="font-size:.72rem;padding:7px 12px;">${f==='daily'?'Κάθε μέρα':f==='range'?'Κάθε X μέρες':f==='weekly'?'Εβδομαδιαία':'Μηνιαία'}</button>`).join('');
+  const days=['Κυ','Δε','Τρ','Τε','Πε','Πα','Σα'];
+  const dayBtns=days.map((d,i)=>`<button class="recur-day-btn" id="fq-day-${i}" onclick="fqToggleDay(${i})">${d}</button>`).join('');
+  const monthBtns=[...Array(31)].map((_,i)=>`<button class="recur-day-btn" id="fq-md-${i+1}" onclick="fqToggleMd(${i+1})" style="font-size:.6rem;min-width:28px;">${i+1}</button>`).join('')+`<button class="recur-day-btn" id="fq-md-last" onclick="fqToggleMd('last')" style="font-size:.6rem;min-width:36px;">Τελ.</button>`;
+
+  modal.innerHTML=`
+    <div style="background:var(--paper);border-radius:8px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+      <div style="font-family:var(--serif);font-size:1.1rem;font-weight:700;margin-bottom:4px;">🔁 Ορισμός Συχνότητας</div>
+      <div style="font-size:.8rem;color:#6b7280;margin-bottom:16px;">${_freqQueue.length > 1 ? `${_freqQueue.length} εναπομείναντα` : 'Τελευταίο'} — <strong>${esc(r.name)}</strong></div>
+      <div class="recur-freq-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">${freqBtns}</div>
+      <div id="fq-range-section" style="display:none;margin-bottom:10px;">
+        <label style="font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;color:#9a9080;">Κάθε πόσες μέρες</label>
+        <input type="number" id="fq-range-days" value="7" min="2" max="365" style="border:1.5px solid var(--border);background:var(--paper);padding:6px 10px;font-family:var(--mono);font-size:.82rem;border-radius:3px;width:80px;margin-top:4px;">
+      </div>
+      <div id="fq-weekly-section" style="display:none;margin-bottom:10px;">
+        <div style="font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;color:#9a9080;margin-bottom:6px;">Μέρες εβδομάδας</div>
+        <div class="recur-days-row" style="display:flex;gap:6px;flex-wrap:wrap;">${dayBtns}</div>
+      </div>
+      <div id="fq-monthly-section" style="display:none;margin-bottom:10px;">
+        <div style="font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;color:#9a9080;margin-bottom:6px;">Ημέρες μήνα</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">${monthBtns}</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-ghost" onclick="fqSkip()">Παράλειψη</button>
+        <button class="btn btn-primary" onclick="fqSave('${r.id}')">✅ Αποθήκευση</button>
+      </div>
+    </div>`;
+
+  // Activate daily by default
+  fqSetFreq('daily');
+}
+
+let _fqFreq='daily'; let _fqWeekdays=new Set(); let _fqMonthdays=new Set();
+function fqSetFreq(f){
+  _fqFreq=f; _fqWeekdays=new Set(); _fqMonthdays=new Set();
+  ['daily','range','weekly','monthly'].forEach(x=>{
+    const b=document.getElementById('fq-btn-'+x);
+    if(b) b.classList.toggle('active',x===f);
+  });
+  ['range','weekly','monthly'].forEach(x=>{
+    const s=document.getElementById('fq-'+x+'-section');
+    if(s) s.style.display=x===f?'block':'none';
+  });
+}
+function fqToggleDay(i){
+  if(_fqWeekdays.has(i)) _fqWeekdays.delete(i); else _fqWeekdays.add(i);
+  const b=document.getElementById('fq-day-'+i);
+  if(b) b.classList.toggle('active',_fqWeekdays.has(i));
+}
+function fqToggleMd(d){
+  if(_fqMonthdays.has(d)) _fqMonthdays.delete(d); else _fqMonthdays.add(d);
+  const id=d==='last'?'fq-md-last':'fq-md-'+d;
+  const b=document.getElementById(id);
+  if(b) b.classList.toggle('active',_fqMonthdays.has(d));
+}
+function fqSave(id){
+  const r=recurs.find(r=>r.id==id);
+  if(r){
+    let freq={type:_fqFreq};
+    if(_fqFreq==='range') freq.days=parseInt(document.getElementById('fq-range-days')?.value)||7;
+    else if(_fqFreq==='weekly') freq.weekdays=[..._fqWeekdays];
+    else if(_fqFreq==='monthly') freq.monthdays=[..._fqMonthdays];
+    r.freq=freq;
+    delete r._needsFreq;
+    saveState();render();
+  }
+  fqNext();
+}
+function fqSkip(){ fqNext(); }
+function fqNext(){
+  _freqQueue.shift();
+  const modal=document.getElementById('freq-editor-modal');
+  if(!_freqQueue.length){
+    if(modal) modal.remove();
+    toast('✅ Συχνότητες αποθηκεύτηκαν','green');
+  } else {
+    openNextFreqEditor();
+  }
+}
+
 loadState();render();switchGroup('pay');
 (function(){
   const manifest={
