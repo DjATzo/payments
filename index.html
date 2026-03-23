@@ -425,7 +425,7 @@ tr.todo-done .action-btn{text-decoration:none;}
 /* ── MOBILE OVERHAUL ─────────────────────────────────────────────────────── */
 @media(max-width:700px){
   /* Layout */
-  .app{padding:12px 10px 90px;}
+  .app{padding:12px 10px calc(80px + env(safe-area-inset-bottom, 0px));}
   .header{margin-bottom:16px;}
   .header h1{font-size:1.5rem;}
   .header p{font-size:.72rem;}
@@ -506,7 +506,7 @@ tr.todo-done .action-btn{text-decoration:none;}
   #sync-indicator{font-size:.65rem;}
 
   /* Toast bottom offset for nav bar */
-  .toast{bottom:80px;right:10px;left:10px;max-width:none;font-size:.75rem;padding:12px 16px;}
+  .toast{bottom:calc(70px + env(safe-area-inset-bottom, 0px));right:10px;left:10px;max-width:none;font-size:.75rem;padding:12px 16px;}
 
   /* Summary grid */
   .sum-grid{grid-template-columns:1fr 1fr;}
