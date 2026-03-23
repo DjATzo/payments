@@ -498,12 +498,10 @@ tr.todo-done .action-btn{text-decoration:none;}
   .cat-panel-inner{grid-template-columns:1fr;}
   .form-field input,.form-field select,.form-field textarea{font-size:16px;} /* prevent iOS zoom */
 
-  /* Tables: horizontal scroll, hide less important columns */
+  /* Tables: horizontal scroll */
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:4px;}
   table{min-width:420px;}
   thead th,tbody td{padding:8px 8px;font-size:.72rem;}
-  /* Hide notes column on mobile */
-  th:nth-child(6),td:nth-child(6){display:none;}
   /* Shrink action cell */
   .action-cell{gap:4px;}
   .action-btn{font-size:.62rem;padding:5px 6px;}
@@ -1651,7 +1649,8 @@ function render(){
         const dateLbl=item.date?new Date(item.date).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'})+(item.type==='recur'?'':daysLabel(item.date)):'—';
         const dotColor=item.type==='pay'?'var(--accent)':item.type==='shop'?'#8b4513':item.type==='recur'?'#6d28d9':overdue?'var(--accent)':!item.date?'#9ca3af':'var(--todo-accent)';
         const amtHtml=item.amount!=null?`<span style="font-family:var(--serif);font-size:.82rem;font-weight:600;color:#374151;margin-left:4px">€${fmt(item.amount)}</span>`:'';
-        const infoHtml=item.type==='recur'&&item.info?`<span style="font-size:.65rem;color:#6d28d9;margin-left:4px">${esc(item.info)}</span>`:'';
+        const notesVal=item.notes||item.info||'';
+        const infoHtml=notesVal?`<span style="font-size:.68rem;color:#6b7280;margin-left:4px;font-style:italic">${esc(notesVal)}</span>`:'';
         const recurLabelHtml=item.recurLabel?`<span style="font-size:.62rem;padding:1px 5px;border-radius:8px;margin-left:4px;background:${item.recurLabel==='Τώρα'?'#6d28d9':item.recurLabel==='Εκπρόθεσμο'?'#b91c1c':item.recurLabel==='✔ Έγινε'?'#6b7280':'#c4b5fd'};color:white">${item.recurLabel}</span>`:'';
         return`<div class="sum-item${overdue?' overdue':''}">
           <div class="sum-item-dot" style="background:${dotColor}"></div>
