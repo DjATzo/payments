@@ -420,12 +420,12 @@ tr.todo-done .action-btn{text-decoration:none;}
 #fb-config-save{align-self:flex-end;background:var(--accent);color:white;border:none;padding:8px 20px;border-radius:3px;font-family:var(--mono);font-size:.75rem;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;}
 #fb-config-save:hover{background:#a83d28;}
 #fb-config-msg{font-size:.72rem;color:var(--paid-accent);display:none;}
-@media(max-width:400px){.app{padding:16px 10px 80px;}}
+@media(max-width:400px){.app{padding:16px 10px calc(70px + env(safe-area-inset-bottom, 10px));}}
 
 /* ── MOBILE OVERHAUL ─────────────────────────────────────────────────────── */
 @media(max-width:700px){
   /* Layout */
-  .app{padding:12px 10px calc(80px + env(safe-area-inset-bottom, 0px));}
+  .app{padding:12px 10px calc(70px + env(safe-area-inset-bottom, 10px));}
   .header{margin-bottom:16px;}
   .header h1{font-size:1.5rem;}
   .header p{font-size:.72rem;}
@@ -791,11 +791,6 @@ tr.todo-done .action-btn{text-decoration:none;}
     </div>
   </div>
   <div id="recur-list"></div>
-</div>
-
-    <div class="tz-current" id="tz-current">🕐 Τρέχουσα: —</div>
-    <div class="settings-info">Επηρεάζει τον υπολογισμό "σήμερα" για επαναλαμβανόμενα και ειδοποιήσεις.</div>
-  </div>
 </div>
 
 <!-- ΣΥΝΟΛΟ -->
@@ -1578,7 +1573,7 @@ function render(){
     });
     if(!allItems.length) listHtml=`<div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμή αντικείμενα!</p></div>`;
 
-    sumContent.innerHTML=`<div class="sum-grid">${cardHtml}</div>${listHtml}`;
+    sumContent.innerHTML=`<div class="sum-grid">${cardHtml}</div>${listHtml}<div style="height:20px"></div>`;
     }catch(e){
       sumContent.innerHTML=`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:4px;padding:16px;color:#991b1b;font-family:monospace;font-size:.8rem;">
         <strong>⚠ Σφάλμα Σύνολο:</strong><br>${e.message}<br><br>
