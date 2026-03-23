@@ -853,6 +853,13 @@ tr.todo-done .action-btn{text-decoration:none;}
       <div class="form-field"><label>Ποσό (€)</label><input type="number" id="r-amount" placeholder="0,00" step="0.01" min="0"></div>
       <div class="form-field"><label>Σημειώσεις</label><input type="text" id="r-notes" placeholder="Προαιρετικά..."></div>
     </div>
+    <div class="form-grid-2" style="margin-bottom:10px;">
+      <div class="form-field">
+        <label>Φορές ανά διάστημα</label>
+        <input type="number" id="r-times" value="1" min="1" max="99" style="width:80px;">
+        <div style="font-size:.68rem;color:#9a9080;margin-top:3px;">π.χ. 2 = εμφανίζεται 2 φορές κάθε φορά</div>
+      </div>
+    </div>
     <div class="recur-form-section">
       <div class="form-field" style="margin-bottom:8px;"><label>Συχνότητα</label></div>
       <div class="recur-freq-row" id="recur-freq-row">
@@ -899,6 +906,17 @@ tr.todo-done .action-btn{text-decoration:none;}
 
 <!-- ΣΥΝΟΛΟ -->
 <div class="panel" id="panel-sum">
+  <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;flex-wrap:wrap;" id="sum-tabs">
+    <button class="subtab active" id="sum-tab-all"      onclick="setSumTab('all')">      📊 Όλα</button>
+    <button class="subtab"        id="sum-tab-past"     onclick="setSumTab('past')">     ⚠ Παλιά</button>
+    <button class="subtab"        id="sum-tab-today"    onclick="setSumTab('today')">    📌 Σήμερα</button>
+    <button class="subtab"        id="sum-tab-tomorrow" onclick="setSumTab('tomorrow')"> ⏰ Αύριο</button>
+    <button class="subtab"        id="sum-tab-week"     onclick="setSumTab('week')">     📅 Εβδομάδα</button>
+    <button class="subtab"        id="sum-tab-nextweek" onclick="setSumTab('nextweek')"> 📆 Επόμενη</button>
+    <button class="subtab"        id="sum-tab-month"    onclick="setSumTab('month')">    🗓 Μήνας</button>
+    <button class="subtab"        id="sum-tab-later"    onclick="setSumTab('later')">    🔮 Αργότερα</button>
+    <button class="subtab"        id="sum-tab-nodate"   onclick="setSumTab('nodate')">   ○ Χωρίς ημ.</button>
+  </div>
   <div id="sum-content"></div>
 </div>
 
@@ -993,6 +1011,7 @@ let recurs=[],nextRecurId=1;
 let recurLog=[];
 let userTz=Intl.DateTimeFormat().resolvedOptions().timeZone;
 let todoFilter='all';
+let sumTab='all';
 
 // Returns today's date string (YYYY-MM-DD) in the selected timezone
 function todayStr(){
@@ -1281,6 +1300,7 @@ function renderRecurList(){
         <div class="recur-card-name">${esc(r.name)} ${amtHtml}</div>
         <div class="recur-card-meta">
           <span class="recur-freq-badge">🔁 ${esc(freqLabel(r.freq))}</span>
+          ${r.times&&r.times>1?`<span class="recur-freq-badge" style="background:#fef3c7;color:#92400e;">×${r.times}</span>`:''}
           ${r.cat?`<span class="sum-item-cat">${esc(r.cat)}</span>`:''}
           ${nextHtml}
         </div>
@@ -1564,7 +1584,8 @@ function render(){
             const overdueStr=toLocalStr(overdueDate);
             const alreadyDone=recurLog.some(l=>l.recurId===r.id&&l.date===overdueStr);
             if(!alreadyDone){
-              entries.push({id:r.id,type:'recur',name:r.name,date:overdueStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Εκπρόθεσμο'});
+              const t=r.times||1;
+              for(let x=0;x<t;x++) entries.push({id:r.id,type:'recur',name:r.name+(t>1?` (${x+1}/${t})`:''),date:overdueStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Εκπρόθεσμο'});
             }
           }
         }
@@ -1573,14 +1594,16 @@ function render(){
         if(first){
           const alreadyDone1=recurLog.some(l=>l.recurId===r.id&&l.date===firstStr);
           if(!alreadyDone1){
-            entries.push({id:r.id,type:'recur',name:r.name,date:firstStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Τώρα'});
+            const t=r.times||1;
+            for(let x=0;x<t;x++) entries.push({id:r.id,type:'recur',name:r.name+(t>1?` (${x+1}/${t})`:''),date:firstStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Τώρα'});
           }
           const second=nextOccurrenceAfter(r.freq, first);
           if(second){
             const secondStr=toLocalStr(second);
             const alreadyDone2=recurLog.some(l=>l.recurId===r.id&&l.date===secondStr);
             if(!alreadyDone2){
-              entries.push({id:r.id,type:'recur',name:r.name,date:secondStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Επόμενο'});
+              const t=r.times||1;
+              for(let x=0;x<t;x++) entries.push({id:r.id,type:'recur',name:r.name+(t>1?` (${x+1}/${t})`:''),date:secondStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Επόμενο'});
             }
           }
         }
@@ -1588,10 +1611,28 @@ function render(){
       }),
     ];
 
+    // Filter by sumTab (time group)
+    const filteredItems=sumTab==='all' ? allItems : allItems.filter(i=>getGroup(i)===sumTab);
+    // Update sum tab buttons with counts
+    const tabCounts={all:allItems.length,past:0,nodate:0,today:0,tomorrow:0,week:0,nextweek:0,month:0,later:0};
+    allItems.forEach(i=>{ const g=getGroup(i); if(tabCounts[g]!==undefined) tabCounts[g]++; });
+    ['all','past','today','tomorrow','week','nextweek','month','later','nodate'].forEach(t=>{
+      const b=document.getElementById('sum-tab-'+t);
+      if(b){
+        b.classList.toggle('active',t===sumTab);
+        const n=tabCounts[t]||0;
+        // Update or add count badge
+        let badge=b.querySelector('.sum-tab-badge');
+        if(!badge){badge=document.createElement('span');badge.className='sum-tab-badge';badge.style.cssText='display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:8px;font-size:.62rem;padding:0 4px;background:var(--ink);color:white;margin-left:4px;';b.appendChild(badge);}
+        badge.textContent=n||'';
+        badge.style.display=n?'inline-flex':'none';
+      }
+    });
+
     function getGroup(item){
       const d=item.date;
       if(!d) return 'nodate';
-      const dd=new Date(d);
+      const dd=parseLocalDate(d);
       if(dd<nowS) return 'past';
       if(dd.toDateString()===nowS.toDateString()) return 'today';
       if(dd.toDateString()===tomS.toDateString()) return 'tomorrow';
@@ -1602,10 +1643,9 @@ function render(){
     }
 
     const groups={nodate:[],past:[],today:[],tomorrow:[],week:[],nextweek:[],month:[],later:[]};
-    allItems.forEach(item=>groups[getGroup(item)].push(item));
+    filteredItems.forEach(item=>groups[getGroup(item)].push(item));
 
-    // Count cards: all combined items
-    const totalItems=allItems.length;
+    // Count cards: based on filtered items
     const cards=[
       {key:'past',    label:'Παλιά',             color:'sc-past',     icon:'⚠'},
       {key:'nodate',  label:'Χωρίς ημερομηνία',  color:'sc-nodate',   icon:'○'},
@@ -1622,8 +1662,9 @@ function render(){
         <div class="sum-card-sub">αντικείμενα</div>
       </div>`).join('');
 
-    // Type badge helper
+    // Type badge helper — hide when already filtered to that type
     function typeBadge(type){
+      if(sumTab!=='all') return '';
       if(type==='todo')  return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#e0f2fe;color:#0369a1;margin-right:2px">☑ Εργασία</span>';
       if(type==='pay')   return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#fef3c7;color:#92400e;margin-right:2px">💳 Πληρωμή</span>';
       if(type==='shop')  return'<span style="font-size:.65rem;padding:1px 6px;border-radius:10px;background:#fce7f3;color:#9d174d;margin-right:2px">🛍 Να εισπραχθεί</span>';
@@ -1680,15 +1721,21 @@ function render(){
       {key:'later',   title:'📆 Αργότερα'},
     ];
     let listHtml='';
-    sectionOrder.forEach(sec=>{
-      const items=groups[sec.key];
-      if(!items.length)return;
-      listHtml+=`<div class="sum-section-title">${sec.title} (${items.length})</div>`;
-      listHtml+=`<div class="sum-list">${renderItems(items)}</div>`;
-    });
-    if(!allItems.length) listHtml=`<div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμή αντικείμενα!</p></div>`;
+    if(sumTab==='all'){
+      sectionOrder.forEach(sec=>{
+        const items=groups[sec.key];
+        if(!items.length)return;
+        listHtml+=`<div class="sum-section-title">${sec.title} (${items.length})</div>`;
+        listHtml+=`<div class="sum-list">${renderItems(items)}</div>`;
+      });
+    } else {
+      const items=groups[sumTab]||[];
+      if(items.length) listHtml=`<div class="sum-list">${renderItems(items)}</div>`;
+    }
+    if(!filteredItems.length) listHtml=`<div class="empty-state"><span class="icon">🎉</span><p>Δεν υπάρχουν εκκρεμή αντικείμενα!</p></div>`;
 
-    sumContent.innerHTML=`<div class="sum-grid">${cardHtml}</div>${listHtml}<div style="height:20px"></div>`;
+    const gridHtml=sumTab==='all'?`<div class="sum-grid">${cardHtml}</div>`:'';
+    sumContent.innerHTML=`${gridHtml}${listHtml}<div style="height:20px"></div>`;
     }catch(e){
       sumContent.innerHTML=`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:4px;padding:16px;color:#991b1b;font-family:monospace;font-size:.8rem;">
         <strong>⚠ Σφάλμα Σύνολο:</strong><br>${e.message}<br><br>
@@ -2036,8 +2083,8 @@ function switchGroup(group){
   if(!g||!g.subs.length){
     // No sub-tabs: hide sub bar, show panel directly
     subtabBar.classList.add('hidden');
-    // hide all subtab buttons
-    document.querySelectorAll('.subtab').forEach(s=>s.style.display='none');
+    // hide only nav subtab buttons (not sum-tabs)
+    document.querySelectorAll('#subtabs .subtab').forEach(s=>s.style.display='none');
     // activate panel
     const allPanels=['weather','pay','paid','todo','done','shop','coll','recur','sum'];
     allPanels.forEach(id=>document.getElementById(`panel-${id}`)?.classList.toggle('active',id===group));
@@ -2047,8 +2094,8 @@ function switchGroup(group){
   } else {
     // Has sub-tabs: show sub bar with this group's subs
     subtabBar.classList.remove('hidden');
-    // Hide all subtabs first
-    document.querySelectorAll('.subtab').forEach(s=>s.style.display='none');
+    // Hide only nav subtabs first
+    document.querySelectorAll('#subtabs .subtab').forEach(s=>s.style.display='none');
     // Show only this group's subtabs
     g.subs.forEach(s=>{
       const el=document.getElementById('subtab-'+s);
@@ -2069,8 +2116,8 @@ function switchTab(which){
   const gt=document.getElementById('tab-'+group);
   if(gt) gt.classList.add('active');
 
-  // Activate sub-tab button
-  document.querySelectorAll('.subtab').forEach(s=>s.classList.remove('active'));
+  // Activate nav sub-tab button only (not sum-tabs)
+  document.querySelectorAll('#subtabs .subtab').forEach(s=>s.classList.remove('active'));
   const st=document.getElementById('subtab-'+which);
   if(st) st.classList.add('active');
 
@@ -2302,6 +2349,7 @@ function addRecur(){
   const amount=parseFloat(document.getElementById('r-amount').value)||null;
   const cat=document.getElementById('r-cat').value.trim();
   const notes=document.getElementById('r-notes').value.trim();
+  const times=Math.max(1,parseInt(document.getElementById('r-times')?.value)||1);
   let freq={type:recurFreq};
   if(recurFreq==='range'){
     const days=parseInt(document.getElementById('r-range-days').value)||2;
@@ -2313,10 +2361,11 @@ function addRecur(){
     if(!selectedMonthdays.size){toast('Επιλέξτε τουλάχιστον μια ημέρα','');return;}
     freq.monthdays=[...selectedMonthdays];
   }
-  recurs.push({id:nextRecurId++,name,amount,cat,notes,freq,createdAt:new Date().toISOString()});
+  recurs.push({id:nextRecurId++,name,amount,cat,notes,freq,times,createdAt:new Date().toISOString()});
   saveState();render();
   // Reset form
   ['r-name','r-amount','r-cat','r-notes'].forEach(id=>document.getElementById(id).value='');
+  const rt=document.getElementById('r-times'); if(rt) rt.value='1';
   selectedWeekdays=new Set();
   selectedMonthdays=new Set();
   document.querySelectorAll('.recur-day-btn').forEach(b=>b.classList.remove('active'));
@@ -2669,6 +2718,8 @@ function renderWeatherData(root, city, weather){
       <button onclick="(()=>{const k='${city.lat.toFixed(3)},${city.lon.toFixed(3)}';delete weatherCache[k];renderWeatherTab();})()">🔄 Ανανέωση</button>
     </div>`;
 }
+
+function setSumTab(t){ sumTab=t; render(); }
 
 // ── Generic import for todo / shop / recur ────────────────────────────────────
 const _importFormOpen={todo:false,shop:false,recur:false};
