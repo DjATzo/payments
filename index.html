@@ -1459,15 +1459,19 @@ function render(){
           }
         }
 
-        // Always add 2 upcoming (today or future) occurrences
+        // Always add 2 upcoming (today or future) occurrences — skip if already done
         if(first){
           const alreadyDone1=recurLog.some(l=>l.recurId===r.id&&l.date===firstStr);
-          entries.push({id:r.id,type:'recur',name:r.name,date:firstStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:alreadyDone1?'✔ Έγινε':'Τώρα'});
+          if(!alreadyDone1){
+            entries.push({id:r.id,type:'recur',name:r.name,date:firstStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Τώρα'});
+          }
           const second=nextOccurrenceAfter(r.freq, first);
           if(second){
             const secondStr=toLocalStr(second);
             const alreadyDone2=recurLog.some(l=>l.recurId===r.id&&l.date===secondStr);
-            entries.push({id:r.id,type:'recur',name:r.name,date:secondStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:alreadyDone2?'✔ Έγινε':'Επόμενο'});
+            if(!alreadyDone2){
+              entries.push({id:r.id,type:'recur',name:r.name,date:secondStr,cat:r.cat||'',info:freqLabel(r.freq),amount:r.amount||null,recurLabel:'Επόμενο'});
+            }
           }
         }
         return entries;
@@ -1521,7 +1525,7 @@ function render(){
     function typeAction(item){
       if(item.type==='todo')  return`<button class="action-btn done-btn" style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="toggleTodo(${item.id})">✔</button>`;
       if(item.type==='pay')   return`<button class="action-btn pay-btn"  style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="markPaid(${item.id})">✅</button>`;
-      if(item.type==='shop')  return`<button class="action-btn shop-btn" style="width:auto;padding:4px 10px;font-size:.65rem;" onclick="undoShop(${item.id})">↩</button>`;
+      if(item.type==='shop')  return`<button class="action-btn" style="width:auto;padding:4px 10px;font-size:.65rem;background:#15803d;color:white;border:none;border-radius:3px;cursor:pointer;" onclick="markShopCollected(${item.id})">💰 Εισπράχθηκε</button>`;
       if(item.type==='recur'){
         const alreadyDone=recurLog.some(l=>l.recurId===item.id&&l.date===item.date);
         return alreadyDone
@@ -1857,7 +1861,6 @@ function markShopCollected(id){
   collectedShops.unshift({...s, collectedAt:new Date().toISOString()});
   shops=shops.filter(x=>x.id!==id);
   saveState();render();
-  switchTab('coll');
   toast('"'+s.desc+'" εισπράχθηκε 💰','green');
 }
 
