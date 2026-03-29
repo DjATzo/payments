@@ -1379,6 +1379,41 @@ function nextOccurrence(freq, startDate){
   return null;
 }
 
+function nextOccurrenceAfter(freq, afterDate){
+  const d = new Date(afterDate); d.setDate(d.getDate()+1); d.setHours(0,0,0,0);
+  if(!freq) return null;
+  if(freq.type==='daily') return d;
+  if(freq.type==='range'){
+    const step=freq.days||1;
+    return new Date(afterDate.getTime()+step*86400000);
+  }
+  if(freq.type==='weekly'){
+    const days=(freq.weekdays||[]).map(Number).sort((a,b)=>a-b);
+    if(!days.length) return null;
+    const dow=d.getDay();
+    let found=days.find(x=>x>=dow);
+    if(found===undefined) found=days[0];
+    const diff=((found-dow)+7)%7||7;
+    const r2=new Date(d); r2.setDate(r2.getDate()+(diff===0?7:diff));
+    return r2;
+  }
+  if(freq.type==='monthly'){
+    const days=(freq.monthdays||[]).slice().sort((a,b)=>(a==='last'?32:Number(a))-(b==='last'?32:Number(b)));
+    if(!days.length) return null;
+    for(let mo=0; mo<=1; mo++){
+      const yr=d.getFullYear(), m=(d.getMonth()+mo)%12, y=m<d.getMonth()&&mo===0?yr:yr+(d.getMonth()+mo>=12?1:0);
+      const lastDay=new Date(y,m+1,0).getDate();
+      for(const day of days){
+        const dd=day==='last'?lastDay:Number(day);
+        if(dd>lastDay) continue;
+        const cand=new Date(y,m,dd);
+        if(cand>afterDate) return cand;
+      }
+    }
+    return null;
+  }
+  return null;
+}
 
 function renderRecurList(){
   const wrap=document.getElementById('recur-list');
@@ -1924,41 +1959,6 @@ function render(){
         amount:s.amount, method:s.method||''
       })),
       ...recurs.flatMap(r=>{
-        function nextOccurrenceAfter(freq, afterDate){
-          const d = new Date(afterDate); d.setDate(d.getDate()+1); d.setHours(0,0,0,0);
-          if(!freq) return null;
-          if(freq.type==='daily') return d;
-          if(freq.type==='range'){
-            const step=freq.days||1;
-            return new Date(afterDate.getTime()+step*86400000);
-          }
-          if(freq.type==='weekly'){
-            const days=(freq.weekdays||[]).map(Number).sort((a,b)=>a-b);
-            if(!days.length) return null;
-            const dow=d.getDay();
-            let found=days.find(x=>x>=dow);
-            if(found===undefined) found=days[0];
-            const diff=((found-dow)+7)%7||7;
-            const r2=new Date(d); r2.setDate(r2.getDate()+(diff===0?7:diff));
-            return r2;
-          }
-          if(freq.type==='monthly'){
-            const days=(freq.monthdays||[]).slice().sort((a,b)=>(a==='last'?32:Number(a))-(b==='last'?32:Number(b)));
-            if(!days.length) return null;
-            for(let mo=0; mo<=1; mo++){
-              const yr=d.getFullYear(), m=(d.getMonth()+mo)%12, y=m<d.getMonth()&&mo===0?yr:yr+(d.getMonth()+mo>=12?1:0);
-              const lastDay=new Date(y,m+1,0).getDate();
-              for(const day of days){
-                const dd=day==='last'?lastDay:Number(day);
-                if(dd>lastDay) continue;
-                const cand=new Date(y,m,dd);
-                if(cand>afterDate) return cand;
-              }
-            }
-            return null;
-          }
-          return null;
-        }
         function toLocalStr(dt){ return dt?`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`:''; }
 
         const entries=[];
