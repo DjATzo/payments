@@ -1623,21 +1623,18 @@ function render(){
       if(recur){
         const _startPay=item.due?parseLocalDate(item.due):null;
         const _todayD=parseLocalDate(todayStr);
-        if(!allDoneToday&&_startPay&&_startPay<_todayD){
-          // Has missed occurrences — show oldest unpaid date
-          if(recur.freq.type==='daily'){
-            displayDate=item.due; // start date itself is first missed
-          } else if(recur.freq.type==='range'){
-            displayDate=item.due;
-          } else {
-            displayDate=item.due; // first missed = start date
-          }
-        } else if(allDoneToday){
+        if(allDoneToday){
           // All done today — show next occurrence
           const nextD=nextOccurrence(recur.freq,item.due);
           if(nextD){
             const nd=new Date(nextD); nd.setDate(nd.getDate()+1);
             displayDate=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`;
+          }
+        } else {
+          // Always show next upcoming occurrence
+          const nextD=nextOccurrence(recur.freq,item.due);
+          if(nextD){
+            displayDate=`${nextD.getFullYear()}-${String(nextD.getMonth()+1).padStart(2,'0')}-${String(nextD.getDate()).padStart(2,'0')}`;
           }
         }
       }
@@ -1808,13 +1805,17 @@ function render(){
       if(recur){
         const _startShop=s.date?parseLocalDate(s.date):null;
         const _todayDS=parseLocalDate(todayStrS);
-        if(!allDoneToday&&_startShop&&_startShop<_todayDS){
-          displayDateS=s.date;
-        } else if(allDoneToday){
+        if(allDoneToday){
           const nextD=nextOccurrence(recur.freq,s.date);
           if(nextD){
             const nd=new Date(nextD); nd.setDate(nd.getDate()+1);
             displayDateS=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`;
+          }
+        } else {
+          // Always show the next upcoming occurrence date
+          const nextD=nextOccurrence(recur.freq,s.date);
+          if(nextD){
+            displayDateS=`${nextD.getFullYear()}-${String(nextD.getMonth()+1).padStart(2,'0')}-${String(nextD.getDate()).padStart(2,'0')}`;
           }
         }
       }
@@ -2250,15 +2251,16 @@ function render(){
       const allDoneToday=doneCount>=times;
       let displayDateT=t.date;
       if(recur){
-        const _startTodo=t.date?parseLocalDate(t.date):null;
-        const _todayDT=parseLocalDate(todayStrT);
-        if(!allDoneToday&&_startTodo&&_startTodo<_todayDT){
-          displayDateT=t.date;
-        } else if(allDoneToday){
+        if(allDoneToday){
           const nextD=nextOccurrence(recur.freq,t.date);
           if(nextD){
             const nd=new Date(nextD); nd.setDate(nd.getDate()+1);
             displayDateT=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`;
+          }
+        } else {
+          const nextD=nextOccurrence(recur.freq,t.date);
+          if(nextD){
+            displayDateT=`${nextD.getFullYear()}-${String(nextD.getMonth()+1).padStart(2,'0')}-${String(nextD.getDate()).padStart(2,'0')}`;
           }
         }
       }
