@@ -293,7 +293,7 @@ td.category span{display:inline-block;padding:2px 8px;border-radius:20px;font-si
 tr.todo-done td:not(:last-child):not(:nth-last-child(2)){opacity:.5;text-decoration:line-through;}
 tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
 /* Two-button cell */
-.action-cell{display:flex;gap:6px;flex-direction:column;}
+.action-cell{display:flex;gap:6px;flex-direction:row;align-items:center;justify-content:center;}
 /* Categories */
 .cat-info{margin-bottom:20px;font-size:.8rem;color:#7a7264;font-style:italic;padding:12px 16px;background:white;border:1.5px solid var(--border);border-radius:4px;line-height:1.6;}
 .cat-panel-inner{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
@@ -683,7 +683,7 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
     <div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;">
       <strong style="color:#5b21b6;">📊 Για Excel/CSV</strong> — χρησιμοποίησε ακριβώς αυτές τις επικεφαλίδες:<br>
       <code style="display:inline-block;margin-top:6px;background:white;border:1px solid #c4b5fd;border-radius:3px;padding:3px 8px;font-size:.78rem;letter-spacing:.03em;color:#1a1a2e;">
-        Περιγραφή &nbsp;|&nbsp; Ποσό &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Σημειώσεις
+        Περιγραφή &nbsp;|&nbsp; Ποσό &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Τρόπος &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Σημειώσεις
       </code><br>
       <span style="color:#7c3aed;margin-top:4px;display:block;">Τα πεδία Ημερομηνία, Κατηγορία, Σημειώσεις είναι προαιρετικά.</span>
     </div>
@@ -726,7 +726,7 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th style="text-align:center">Ενέργεια</th></tr></thead>
+      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th style="text-align:center">Κατάσταση</th></tr></thead>
       <tbody id="tbody-pay"></tbody>
     </table>
   </div>
@@ -735,12 +735,9 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
 <!-- ΠΛΗΡΩΜΕΝΑ -->
 <div class="panel" id="panel-paid">
   <div id="filterbar-paid"></div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th>Πληρώθηκε</th><th style="text-align:center">Ενέργεια</th></tr></thead>
-      <tbody id="tbody-paid"></tbody>
-    </table>
-  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;"><button class="btn" style="background:var(--paid-accent);color:white;margin-bottom:0;" onclick="togglePaidForm()">+ Νέα Πληρωμένη</button></div>
+  <div class="add-form" id="paid-form"><h3>Νέα Πληρωμένη Εγγραφή</h3><div class="form-grid"><div class="form-field"><label>Περιγραφή *</label><input type="text" id="pf-desc" placeholder="π.χ. Λογαριασμός ΔΕΗ"></div><div class="form-field"><label>Ποσό (€)</label><input type="number" id="pf-amount" placeholder="0,00" step="0.01" min="0"></div><div class="form-field"><label>Τρόπος</label><select id="pf-method"><option value="">— Επιλογή —</option><option value="Μετρητά">Μετρητά</option><option value="Πειραιώς">Πειραιώς</option><option value="Εθνική">Εθνική</option><option value="Eurobank">Eurobank</option><option value="Alpha">Alpha</option></select></div><div class="form-field"><label>Ημερομηνία Πληρωμής</label><input type="date" id="pf-paidat"></div><div class="form-field"><label>Κατηγορία</label><input type="text" id="pf-cat" placeholder="π.χ. Κοινόχρηστα"></div><div class="form-field"><label>Σημειώσεις</label><input type="text" id="pf-notes"></div></div><div class="form-actions"><button class="btn btn-ghost" onclick="togglePaidForm()">Ακύρωση</button><button class="btn btn-primary" onclick="addPaidDirect()">Προσθήκη</button></div></div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th>Πληρώθηκε</th><th style="text-align:center">Ενέργεια</th></tr></thead><tbody id="tbody-paid"></tbody></table></div>
 </div>
 
 <!-- ΕΡΓΑΣΙΕΣ (TO DO) -->
@@ -754,7 +751,7 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
     <div style="background:#e0f2fe;border:1.5px solid #7dd3fc;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;">
       <strong style="color:#0369a1;">📊 Επικεφαλίδες Excel/CSV:</strong><br>
       <code style="display:inline-block;margin-top:6px;background:white;border:1px solid #7dd3fc;border-radius:3px;padding:3px 8px;font-size:.78rem;color:#1a1a2e;">
-        Όνομα &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Πληροφορίες
+        Όνομα &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Τύπος &nbsp;|&nbsp; Πληροφορίες
       </code>
     </div>
     <div class="form-field" style="margin-bottom:12px;"><label>Αρχείο *</label><input type="file" id="import-file-todo" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.xlsx,.xls" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;border-radius:3px;"></div>
@@ -787,7 +784,7 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
   <div id="filterbar-todo"></div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τύπος</th><th>Σημειώσεις</th><th style="text-align:center">Κατάσταση</th><th style="text-align:center">🗑</th></tr></thead>
+      <thead><tr><th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τύπος</th><th>Σημειώσεις</th><th style="text-align:center">Κατάσταση</th></tr></thead>
       <tbody id="tbody-todo"></tbody>
     </table>
   </div>
@@ -796,12 +793,9 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
 <!-- ΟΛΟΚΛΗΡΩΜΕΝΕΣ -->
 <div class="panel" id="panel-done">
   <div id="filterbar-done"></div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τύπος</th><th>Σημειώσεις</th><th>Ολοκληρώθηκε</th><th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th></tr></thead>
-      <tbody id="tbody-done"></tbody>
-    </table>
-  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;"><button class="btn" style="background:var(--todo-accent);color:white;margin-bottom:0;" onclick="toggleDoneForm()">+ Νέα Ολοκληρωμένη</button></div>
+  <div class="add-form" id="done-form"><h3>Νέα Ολοκληρωμένη Εργασία</h3><div class="form-grid"><div class="form-field"><label>Όνομα *</label><input type="text" id="df-name" placeholder="π.χ. Ανανέωση συμβολαίου"></div><div class="form-field"><label>Τύπος</label><input type="text" id="df-ttype" placeholder="π.χ. Προσωπικό"></div><div class="form-field"><label>Ημερομηνία</label><input type="date" id="df-date"></div><div class="form-field"><label>Κατηγορία</label><input type="text" id="df-cat" placeholder="π.χ. Δουλειά"></div></div><div class="form-grid-2"><div class="form-field"><label>Σημειώσεις</label><textarea id="df-info"></textarea></div></div><div class="form-actions"><button class="btn btn-ghost" onclick="toggleDoneForm()">Ακύρωση</button><button class="btn btn-primary" onclick="addDoneDirect()">Προσθήκη</button></div></div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Όνομα</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τύπος</th><th>Σημειώσεις</th><th>Ολοκληρώθηκε</th><th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th></tr></thead><tbody id="tbody-done"></tbody></table></div>
 </div>
 
 <!-- ΨΩΝΙΑ -->
@@ -817,7 +811,7 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
     <div style="background:#fce7f3;border:1.5px solid #f9a8d4;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;">
       <strong style="color:#9d174d;">📊 Επικεφαλίδες Excel/CSV:</strong><br>
       <code style="display:inline-block;margin-top:6px;background:white;border:1px solid #f9a8d4;border-radius:3px;padding:3px 8px;font-size:.78rem;color:#1a1a2e;">
-        Περιγραφή &nbsp;|&nbsp; Ποσό &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Σημειώσεις
+        Περιγραφή &nbsp;|&nbsp; Ποσό &nbsp;|&nbsp; Ημερομηνία &nbsp;|&nbsp; Κατηγορία &nbsp;|&nbsp; Τρόπος &nbsp;|&nbsp; Σημειώσεις
       </code>
     </div>
     <div class="form-field" style="margin-bottom:12px;"><label>Αρχείο *</label><input type="file" id="import-file-shop" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.xlsx,.xls" style="border:1.5px solid var(--border);background:var(--paper);padding:8px 10px;font-family:var(--mono);font-size:.82rem;border-radius:3px;"></div>
@@ -847,7 +841,7 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th style="text-align:center">Εισπράχθηκε</th><th style="text-align:center">🗑</th></tr></thead>
+      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th style="text-align:center">Κατάσταση</th></tr></thead>
       <tbody id="tbody-shop"></tbody>
     </table>
   </div>
@@ -856,12 +850,9 @@ tr.todo-done .action-btn{text-decoration:none;opacity:1;pointer-events:auto;}
 <!-- ΕΙΣΠΡΑΧΘΗΚΑΝ -->
 <div class="panel" id="panel-coll">
   <div id="filterbar-coll"></div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th>Εισπράχθηκε</th><th style="text-align:center">Αναίρεση</th><th style="text-align:center">🗑</th></tr></thead>
-      <tbody id="tbody-coll"></tbody>
-    </table>
-  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;"><button class="btn" style="background:var(--paid-accent);color:white;margin-bottom:0;" onclick="toggleCollForm()">+ Νέα Εισπραχθείσα</button></div>
+  <div class="add-form" id="coll-form"><h3>Νέα Εισπραχθείσα Εγγραφή</h3><div class="form-grid"><div class="form-field"><label>Περιγραφή *</label><input type="text" id="cf-desc" placeholder="π.χ. Νίκος, Μαρία..."></div><div class="form-field"><label>Ποσό (€)</label><input type="number" id="cf-amount" placeholder="0,00" step="0.01" min="0"></div><div class="form-field"><label>Τρόπος</label><select id="cf-method"><option value="">— Επιλογή —</option><option value="Μετρητά">Μετρητά</option><option value="Πειραιώς">Πειραιώς</option><option value="Εθνική">Εθνική</option><option value="Eurobank">Eurobank</option><option value="Alpha">Alpha</option></select></div><div class="form-field"><label>Ημερομηνία Είσπραξης</label><input type="date" id="cf-collectedat"></div><div class="form-field"><label>Κατηγορία</label><input type="text" id="cf-cat"></div><div class="form-field"><label>Σημειώσεις</label><input type="text" id="cf-notes"></div></div><div class="form-actions"><button class="btn btn-ghost" onclick="toggleCollForm()">Ακύρωση</button><button class="btn btn-primary" onclick="addCollDirect()">Προσθήκη</button></div></div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Περιγραφή</th><th>Ποσό</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Τρόπος</th><th>Σημειώσεις</th><th>Εισπράχθηκε</th><th style="text-align:center">Ενέργεια</th></tr></thead><tbody id="tbody-coll"></tbody></table></div>
 </div>
 
 <!-- ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΑ -->
@@ -1685,7 +1676,7 @@ function render(){
         <td style="color:#9a9080;font-size:.78rem">${esc(item.notes||'—')}</td>
         <td onclick="event.stopPropagation()"><div class="action-cell">
           <button class="action-btn pay-btn" onclick="markPaid(${item.id})">✅ Πληρώθηκε</button>
-          <button class="action-btn del-btn" onclick="deletePending(${item.id})">🗑 Διαγραφή</button>
+          <button class="action-btn del-btn" style="width:auto;padding:6px 10px;" onclick="deletePending(${item.id})">🗑</button>
         </div></td>
       </tr>`;
     }).join('');
@@ -1738,7 +1729,7 @@ function render(){
           </div></td>
         </tr>`;
       }
-      return`<tr style="cursor:pointer" onclick="openEdit('paid',${item.id})">
+      return`<tr class="todo-done" style="cursor:pointer" onclick="openEdit('paid',${item.id})">
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(item.desc)}</strong>${item.notes&&/\(\d+\/\d+\)/.test(item.desc)?`<br><span style="font-size:.68rem;color:#9a9080;font-weight:normal;">📌 ${esc(item.notes)}</span>`:''}</td>
         <td class="amount" style="color:var(--paid-accent)">€ ${fmt(item.amount)}</td>
@@ -1752,7 +1743,7 @@ function render(){
             ? `<button class="action-btn shop-btn" onclick="moveBackToShop(${item.id})">↩ Να εισπραχθούν</button>`
             : `<button class="action-btn back-btn" onclick="moveBack(${item.id})">↩ Αναίρεση</button>`
           }
-          <button class="action-btn del-btn" onclick="deletePaid(${item.id})">🗑 Διαγραφή</button>
+          <button class="action-btn del-btn" style="width:auto;padding:6px 10px;" onclick="deletePaid(${item.id})">🗑</button>
         </div></td>
       </tr>`;
     }).join('');
@@ -1852,9 +1843,10 @@ function render(){
         }
       }
       const missedNoteS=missedCountS>0?`⚠ ${missedCountS} εκπρόθεσμ${missedCountS===1?'η':'ες'}`:null;
+      const _missedSuffixS=missedCountS>0?` <span style="background:#fee2e2;color:#b91c1c;border-radius:6px;padding:0 5px;font-size:.6rem;font-weight:600;">⚠${missedCountS}</span>`:'';
       const recurBadge=s.recurId
-        ?`<span style="margin-left:5px;font-size:.6rem;padding:1px 5px;border-radius:8px;background:${allDoneToday?'#d1fae5;color:#065f46':'#ede9fe;color:#5b21b6'};vertical-align:middle;">${allDoneToday?'✔':(times>1?`🔁 ${doneCount}/${times}`:'🔁')}</span>`:'';
-      const _dispDateStr=displayDateS?new Date(displayDateS).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'})+daysLabel(displayDateS):'—';
+        ?`<span style="margin-left:5px;font-size:.6rem;padding:1px 5px;border-radius:8px;background:${allDoneToday?'#d1fae5;color:#065f46':'#ede9fe;color:#5b21b6'};vertical-align:middle;">${allDoneToday?'✔':(times>1?`🔁 ${doneCount}/${times}`:'🔁')}${allDoneToday?'':_missedSuffixS}</span>`:'';
+      const _dispDateStr=s.recurId?(displayDateS?new Date(displayDateS).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'})+daysLabel(displayDateS):'—'):duePill(s.date);
       return`
       <tr style="cursor:pointer" onclick="openEdit('shop',${s.id})">
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
@@ -1862,10 +1854,11 @@ function render(){
         <td class="amount" style="color:#8b4513">€ ${fmt(s.amount)}</td>
         <td>${_dispDateStr}</td>
         <td class="category"><span>${esc(s.cat||'—')}</span></td>
-        <td style="color:#9a9080;font-size:.78rem">${missedNoteS?`<span style="color:var(--accent);font-weight:600">${missedNoteS}</span>${s.notes?'<br>':''}`:''} ${esc(s.notes||(!missedNoteS?'—':''))}</td>
+        <td style="color:#9a9080;font-size:.78rem">${esc(s.method||'—')}</td>
+        <td style="color:#9a9080;font-size:.78rem">${esc(s.notes||'—')}</td>
         <td onclick="event.stopPropagation()"><div class="action-cell">
           <button class="action-btn pay-btn" onclick="markShopCollected(${s.id})">💰 Εισπράχθηκε</button>
-          <button class="action-btn del-btn" onclick="deleteShop(${s.id})">🗑 Διαγραφή</button>
+          <button class="action-btn del-btn" style="width:auto;padding:6px 10px;" onclick="deleteShop(${s.id})">🗑</button>
         </div></td>
       </tr>`;
     }).join('');
@@ -1915,7 +1908,7 @@ function render(){
             <td onclick="event.stopPropagation()"><button class="action-btn del-btn" onclick="deleteRecurLog(${s.recurId},'${s.logDate}','${s.collectedAt}')">🗑</button></td>
           </tr>`;
         }
-        return`<tr>
+        return`<tr class="todo-done">
           <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
           <td><strong>${esc(s.desc)}</strong>${s.notes&&/\(\d+\/\d+\)/.test(s.desc)?`<br><span style="font-size:.68rem;color:#9a9080;font-weight:normal;">📌 ${esc(s.notes)}</span>`:''}</td>
           <td class="amount" style="color:var(--paid-accent)">€ ${fmt(s.amount)}</td>
@@ -1924,8 +1917,7 @@ function render(){
           <td style="color:#9a9080;font-size:.78rem">${esc(s.method||'—')}</td>
           <td style="color:#9a9080;font-size:.78rem">${esc(s.notes||'—')}</td>
           <td class="paid-date">✓ ${new Date(s.collectedAt).toLocaleDateString('el-GR')}</td>
-          <td onclick="event.stopPropagation()"><button class="action-btn back-btn" onclick="uncollectShop(${s.id})">↩ Αναίρεση</button></td>
-          <td onclick="event.stopPropagation()"><button class="action-btn del-btn" onclick="deleteCollected(${s.id})">🗑</button></td>
+          <td onclick="event.stopPropagation()"><div class="action-cell"><button class="action-btn back-btn" onclick="uncollectShop(${s.id})">↩ Αναίρεση</button><button class="action-btn del-btn" style="width:auto;padding:6px 10px;" onclick="deleteCollected(${s.id})">🗑</button></div></td>
         </tr>`;
       }).join('');
     }
@@ -2298,17 +2290,17 @@ function render(){
         }
       }
       const missedNoteT=missedCountT>0?`⚠ ${missedCountT} εκπρόθεσμ${missedCountT===1?'η':'ες'}`:null;
+      const _missedSuffixT=missedCountT>0?` <span style="background:#fee2e2;color:#b91c1c;border-radius:6px;padding:0 5px;font-size:.6rem;font-weight:600;">⚠${missedCountT}</span>`:'';
       const recurBadge=t.recurId
-        ?`<span style="margin-left:5px;font-size:.6rem;padding:1px 5px;border-radius:8px;background:${allDoneToday?'#d1fae5;color:#065f46':'#ede9fe;color:#5b21b6'};vertical-align:middle;">${allDoneToday?'✔':(times>1?`🔁 ${doneCount}/${times}`:'🔁')}</span>`:'';
+        ?`<span style="margin-left:5px;font-size:.6rem;padding:1px 5px;border-radius:8px;background:${allDoneToday?'#d1fae5;color:#065f46':'#ede9fe;color:#5b21b6'};vertical-align:middle;">${allDoneToday?'✔':(times>1?`🔁 ${doneCount}/${times}`:'🔁')}${allDoneToday?'':_missedSuffixT}</span>`:'';
       return`<tr style="cursor:pointer" onclick="openEdit('todo',${t.id})">
         <td style="color:#9a9080;font-size:.75rem">${i+1}</td>
         <td><strong>${esc(t.name)}</strong>${recurBadge}${t.info&&/\(\d+\/\d+\)/.test(t.name)?`<br><span style="font-size:.68rem;color:#9a9080;font-weight:normal;">📌 ${esc(t.info)}</span>`:''}</td>
-        <td>${allDoneToday?displayLblT:(overdue?'⚠ ':'')+dateLbl+(t.date?daysLabel(t.date):'')}</td>
+        <td>${t.recurId?(allDoneToday?displayLblT:(overdue?'⚠ ':'')+dateLbl+(t.date?daysLabel(t.date):'')):(duePill(t.date))}</td>
         <td class="category"><span>${esc(t.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(t.ttype||'—')}</td>
-        <td style="color:#9a9080;font-size:.78rem;white-space:pre-wrap;max-width:200px">${missedNoteT?`<span style="color:var(--accent);font-weight:600">${missedNoteT}</span>${t.info?'<br>':''}`:''} ${esc(t.info||(!missedNoteT?'—':''))}</td>
-        <td onclick="event.stopPropagation()"><button class="action-btn done-btn" onclick="toggleTodo(${t.id})">✔ Ολοκληρώθηκε</button></td>
-        <td onclick="event.stopPropagation()"><button class="action-btn del-btn" onclick="deleteTodo(${t.id})">🗑</button></td>
+        <td style="color:#9a9080;font-size:.78rem;white-space:pre-wrap;max-width:200px">${esc(t.info||'—')}</td>
+        <td onclick="event.stopPropagation()"><div class="action-cell"><button class="action-btn done-btn" onclick="toggleTodo(${t.id})">✔ Ολοκληρώθηκε</button><button class="action-btn del-btn" style="width:auto;padding:6px 10px;" onclick="deleteTodo(${t.id})">🗑</button></div></td>
       </tr>`;
     }).join('');
   }
@@ -3475,12 +3467,14 @@ async function parseSpreadsheetFor(file, type){
       'όνομα':'name','ονομα':'name','name':'name','εργασία':'name','εργασια':'name','title':'name',
       'ημερομηνία':'date','ημερομηνια':'date','date':'date',
       'κατηγορία':'cat','κατηγορια':'cat','category':'cat','cat':'cat',
+      'τύπος':'ttype','τυπος':'ttype','type':'ttype','ttype':'ttype',
       'πληροφορίες':'info','πληροφοριες':'info','info':'info','notes':'info','σημειώσεις':'info','σημειωσεις':'info',
     },
     shop:{
       'περιγραφή':'desc','περιγραφη':'desc','description':'desc','desc':'desc','name':'desc','ονομα':'desc',
       'ποσό':'amount','ποσο':'amount','amount':'amount','τιμή':'amount','τιμη':'amount',
       'ημερομηνία':'date','ημερομηνια':'date','date':'date',
+      'τρόπος':'method','τροπος':'method','method':'method',
       'κατηγορία':'cat','κατηγορια':'cat','category':'cat','cat':'cat',
       'σημειώσεις':'notes','σημειωσεις':'notes','notes':'notes',
     },
@@ -3506,7 +3500,7 @@ async function parseSpreadsheetFor(file, type){
   if(!Object.values(colMap).includes(requiredField)) return null;
 
   return rows.map(row=>{
-    const item={name:'',desc:'',amount:0,date:'',due:'',cat:'',notes:'',info:'',freq:'daily'};
+    const item={name:'',desc:'',amount:0,date:'',due:'',method:'',cat:'',ttype:'',notes:'',info:'',freq:'daily'};
     Object.entries(colMap).forEach(([col,field])=>{
       let val=row[col];
       if(field==='amount'){
@@ -3528,8 +3522,8 @@ async function parseSpreadsheetFor(file, type){
 async function parseWithAIFor(file, ext, hint, type){
   const typeLabels={todo:'εργασίες/tasks',shop:'εισπράξεις/χρήματα που χρωστάνε',recur:'επαναλαμβανόμενες υποχρεώσεις'};
   const fieldDescs={
-    todo:'name (string), date (YYYY-MM-DD ή ""), cat (string), info (string)',
-    shop:'desc (string), amount (number €), date (YYYY-MM-DD ή ""), cat (string), notes (string)',
+    todo:'name (string), date (YYYY-MM-DD ή ""), cat (string), ttype (string ή ""), info (string)',
+    shop:'desc (string), amount (number €), date (YYYY-MM-DD ή ""), cat (string), method (string ή ""), notes (string)',
     recur:'name (string), amount (number ή null), cat (string), freq (daily|weekly|monthly), notes (string)',
   };
   const systemPrompt=`Εξήγαγε ${typeLabels[type]} από το αρχείο. Επίστρεψε ΜΟΝΟ JSON array. Κάθε αντικείμενο: ${fieldDescs[type]}. ${hint?'Οδηγίες: '+hint:''} Αν δεν βρεις τίποτα επίστρεψε [].`;
@@ -3564,6 +3558,7 @@ function renderImportPreviewFor(items, type){
         <div class="import-preview-field" style="flex:2;min-width:120px;"><label>Όνομα</label><input type="text" id="imp2-name-${i}" value="${esc(item.name||'')}"></div>
         <div class="import-preview-field" style="flex:1;min-width:110px;"><label>Ημερομηνία</label><input type="date" id="imp2-date-${i}" value="${item.date||''}"></div>
         <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Κατηγορία</label><input type="text" id="imp2-cat-${i}" value="${esc(item.cat||'')}" list="imp2-catlist-${i}"><datalist id="imp2-catlist-${i}">${catOptions}</datalist></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Τύπος</label><input type="text" id="imp2-ttype-${i}" value="${esc(item.ttype||'')}"></div>
         <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Πληροφορίες</label><input type="text" id="imp2-info-${i}" value="${esc(item.info||'')}"></div>`;
     } else if(type==='shop'){
       fields=`
@@ -3571,6 +3566,7 @@ function renderImportPreviewFor(items, type){
         <div class="import-preview-field" style="flex:1;min-width:70px;"><label>Ποσό €</label><input type="number" id="imp2-amt-${i}" value="${item.amount||''}" step="0.01"></div>
         <div class="import-preview-field" style="flex:1;min-width:110px;"><label>Ημερομηνία</label><input type="date" id="imp2-date-${i}" value="${item.date||''}"></div>
         <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Κατηγορία</label><input type="text" id="imp2-cat-${i}" value="${esc(item.cat||'')}" list="imp2-catlist-${i}"><datalist id="imp2-catlist-${i}">${catOptions}</datalist></div>
+        <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Τρόπος</label><select id="imp2-method-${i}" style="border:1px solid var(--border);background:white;padding:5px 8px;font-family:var(--mono);font-size:.78rem;border-radius:3px;width:100%;"><option value="">— Επιλογή —</option><option value="Μετρητά">Μετρητά</option><option value="Πειραιώς">Πειραιώς</option><option value="Εθνική">Εθνική</option><option value="Eurobank">Eurobank</option><option value="Alpha">Alpha</option></select></div>
         <div class="import-preview-field" style="flex:1;min-width:100px;"><label>Σημειώσεις</label><input type="text" id="imp2-notes-${i}" value="${esc(item.notes||'')}"></div>`;
     } else {
       fields=`
@@ -3597,16 +3593,18 @@ function confirmImportFor(count, type){
       if(!name) continue;
       const date=document.getElementById('imp2-date-'+i)?.value||'';
       const cat=(document.getElementById('imp2-cat-'+i)?.value||'').trim();
+      const ttype=(document.getElementById('imp2-ttype-'+i)?.value||'').trim();
       const info=(document.getElementById('imp2-info-'+i)?.value||'').trim();
-      todos.push({id:nextTodoId++,name,date,cat,info,done:false,createdAt:new Date().toISOString()});
+      todos.push({id:nextTodoId++,name,date,cat,ttype,info,done:false,createdAt:new Date().toISOString()});
     } else if(type==='shop'){
       const desc=(document.getElementById('imp2-desc-'+i)?.value||'').trim();
       if(!desc) continue;
       const amount=parseFloat(document.getElementById('imp2-amt-'+i)?.value)||0;
       const date=document.getElementById('imp2-date-'+i)?.value||'';
       const cat=(document.getElementById('imp2-cat-'+i)?.value||'').trim();
+      const method2=(document.getElementById('imp2-method-'+i)?.value||'').trim();
       const notes=(document.getElementById('imp2-notes-'+i)?.value||'').trim();
-      shops.push({id:nextShopId++,desc,amount,date,cat,notes,origin:'shop',createdAt:new Date().toISOString()});
+      shops.push({id:nextShopId++,desc,amount,date,cat,method:method2,notes,origin:'shop',createdAt:new Date().toISOString()});
     } else if(type==='recur'){
       const name=(document.getElementById('imp2-name-'+i)?.value||'').trim();
       if(!name) continue;
@@ -3712,6 +3710,7 @@ async function parseSpreadsheet(file, ext){
     'περιγραφή':'desc','περιγραφη':'desc','description':'desc','desc':'desc','name':'desc','ονομα':'desc','όνομα':'desc',
     'ποσό':'amount','ποσο':'amount','amount':'amount','τιμή':'amount','τιμη':'amount','price':'amount','κόστος':'amount','κοστος':'amount',
     'ημερομηνία':'due','ημερομηνια':'due','date':'due','due':'due','λήξη':'due','ληξη':'due',
+    'τρόπος':'method','τροπος':'method','method':'method','τράπεζα':'method','τραπεζα':'method',
     'κατηγορία':'cat','κατηγορια':'cat','category':'cat','cat':'cat','τύπος':'cat','τυπος':'cat',
     'σημειώσεις':'notes','σημειωσεις':'notes','notes':'notes','σημειώσεις':'notes','info':'notes','πληροφορίες':'notes',
   };
@@ -3730,7 +3729,7 @@ async function parseSpreadsheet(file, ext){
   if(!hasDesc&&!hasAmt) return null;
 
   return rows.map(row=>{
-    const item={desc:'',amount:0,due:'',cat:'',notes:''};
+    const item={desc:'',amount:0,due:'',method:'',cat:'',notes:''};
     Object.entries(colMap).forEach(([col,field])=>{
       let val=row[col];
       if(field==='amount'){
@@ -3759,6 +3758,7 @@ async function parseWithAI(file, ext, hint){
 - desc: string
 - amount: number (ευρώ)
 - due: string YYYY-MM-DD ή ""
+- method: string (Μετρητά/Πειραιώς/Εθνική/Eurobank/Alpha ή "")
 - cat: string (από: ${cats.join(', ')})
 - notes: string ή ""
 ${hint?'Οδηγίες: '+hint:''}
@@ -3817,6 +3817,7 @@ function renderImportPreview(items){
         <label>Ημερομηνία</label>
         <input type="date" id="imp-due-${i}" value="${item.due||''}">
       </div>
+      <div class="import-preview-field" style="flex:1;min-width:110px;"><label>Τρόπος</label><select id="imp-method-${i}" style="border:1px solid var(--border);background:white;padding:5px 8px;font-family:var(--mono);font-size:.78rem;border-radius:3px;width:100%;"><option value="">— Επιλογή —</option><option value="Μετρητά">Μετρητά</option><option value="Πειραιώς">Πειραιώς</option><option value="Εθνική">Εθνική</option><option value="Eurobank">Eurobank</option><option value="Alpha">Alpha</option></select></div>
       <div class="import-preview-field" style="flex:1;min-width:110px;">
         <label>Κατηγορία</label>
         <input type="text" id="imp-cat-${i}" value="${esc(item.cat||'')}" list="imp-cat-list-${i}">
@@ -3844,10 +3845,11 @@ function confirmImport(count){
     const desc=(document.getElementById('imp-desc-'+i)?.value||'').trim();
     const amount=parseFloat(document.getElementById('imp-amt-'+i)?.value)||0;
     const due=document.getElementById('imp-due-'+i)?.value||'';
+    const method=(document.getElementById('imp-method-'+i)?.value||'').trim();
     const cat=(document.getElementById('imp-cat-'+i)?.value||'').trim();
     const notes=(document.getElementById('imp-notes-'+i)?.value||'').trim();
     if(!desc) continue;
-    pending.push({id:nextId++,desc,amount,due,cat,notes});
+    pending.push({id:nextId++,desc,amount,due,method,cat,notes});
     if(cat&&!catsPay.includes(cat)) catsPay.push(cat);
     imported++;
   }
@@ -4417,6 +4419,80 @@ function installApp(){
   deferredPrompt.prompt();
   deferredPrompt.userChoice.then(()=>{deferredPrompt=null;});
 }
+
+let _paidFormOpen=false;
+function togglePaidForm(){
+  _paidFormOpen=!_paidFormOpen;
+  const f=document.getElementById('paid-form');
+  f.classList.toggle('open',_paidFormOpen);
+  if(_paidFormOpen){
+    const d=new Date();
+    document.getElementById('pf-paidat').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    setTimeout(()=>document.getElementById('pf-desc').focus(),50);
+  }
+}
+function addPaidDirect(){
+  const desc=document.getElementById('pf-desc').value.trim();
+  if(!desc){document.getElementById('pf-desc').style.borderColor='var(--accent)';setTimeout(()=>document.getElementById('pf-desc').style.borderColor='',600);return;}
+  const amount=parseFloat(document.getElementById('pf-amount').value)||0;
+  const method=document.getElementById('pf-method').value;
+  const pv=document.getElementById('pf-paidat').value;
+  const paidAt=pv?new Date(pv+'T12:00:00').toISOString():new Date().toISOString();
+  const cat=document.getElementById('pf-cat').value.trim();
+  const notes=document.getElementById('pf-notes').value.trim();
+  paid.unshift({id:nextId++,desc,amount,method,cat,notes,paidAt,due:''});
+  if(cat&&!catsPaid.includes(cat)) catsPaid.push(cat);
+  ['pf-desc','pf-amount','pf-cat','pf-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pf-method').value='';
+  saveState();render();
+  toast(desc+' προστέθηκε ✅','green');
+}
+let _doneFormOpen=false;
+function toggleDoneForm(){
+  _doneFormOpen=!_doneFormOpen;
+  const f=document.getElementById('done-form');
+  f.classList.toggle('open',_doneFormOpen);
+  if(_doneFormOpen) setTimeout(()=>document.getElementById('df-name').focus(),50);
+}
+function addDoneDirect(){
+  const name=document.getElementById('df-name').value.trim();
+  if(!name){document.getElementById('df-name').style.borderColor='var(--accent)';setTimeout(()=>document.getElementById('df-name').style.borderColor='',600);return;}
+  const ttype=document.getElementById('df-ttype').value.trim();
+  const date=document.getElementById('df-date').value||'';
+  const cat=document.getElementById('df-cat').value.trim();
+  const info=document.getElementById('df-info').value.trim();
+  todos.push({id:nextTodoId++,name,ttype,date,cat,info,done:true,doneAt:new Date().toISOString(),createdAt:new Date().toISOString()});
+  ['df-name','df-ttype','df-date','df-cat','df-info'].forEach(id=>document.getElementById(id).value='');
+  saveState();render();
+  toast(name+' προστέθηκε ✔','todo');
+}
+let _collFormOpen=false;
+function toggleCollForm(){
+  _collFormOpen=!_collFormOpen;
+  const f=document.getElementById('coll-form');
+  f.classList.toggle('open',_collFormOpen);
+  if(_collFormOpen){
+    const d=new Date();
+    document.getElementById('cf-collectedat').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    setTimeout(()=>document.getElementById('cf-desc').focus(),50);
+  }
+}
+function addCollDirect(){
+  const desc=document.getElementById('cf-desc').value.trim();
+  if(!desc){document.getElementById('cf-desc').style.borderColor='var(--accent)';setTimeout(()=>document.getElementById('cf-desc').style.borderColor='',600);return;}
+  const amount=parseFloat(document.getElementById('cf-amount').value)||0;
+  const method=document.getElementById('cf-method').value;
+  const cv=document.getElementById('cf-collectedat').value;
+  const collectedAt=cv?new Date(cv+'T12:00:00').toISOString():new Date().toISOString();
+  const cat=document.getElementById('cf-cat').value.trim();
+  const notes=document.getElementById('cf-notes').value.trim();
+  collectedShops.unshift({id:nextShopId++,desc,amount,method,cat,notes,collectedAt,date:''});
+  ['cf-desc','cf-amount','cf-cat','cf-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cf-method').value='';
+  saveState();render();
+  toast(desc+' προστέθηκε','green');
+}
+
 </script>
 
 <!-- Recur Setup Modal -->
