@@ -74,6 +74,9 @@ const FIREBASE_CONFIG = window.__FIREBASE_CONFIG__ || {
 
       // Load this user's localStorage snapshot first (for instant offline render)
       window.__loadStateForUser(uid);
+      // After loading, currentMode may have been restored from localStorage —
+      // sync it back into window.__currentMode so fbDocRef() reads the right document.
+      window.__currentMode = (typeof currentMode !== 'undefined' ? currentMode : null) || window.__currentMode || 'personal';
 
       // Then load from Firestore (authoritative)
       const snap = await getDoc(fbDocRef());
@@ -1240,6 +1243,9 @@ function saveState(){
 // Load a specific user's localStorage snapshot into memory and re-render
 window.__loadStateForUser = function(uid){
   window.__currentUid = uid;
+  // currentMode is already restored from localStorage before this call (line at top of script),
+  // but sync it to window.__currentMode so Firebase module sees the right mode.
+  window.__currentMode = currentMode || 'personal';
   loadState();
   render();
 };
