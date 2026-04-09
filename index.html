@@ -1452,11 +1452,57 @@ function _sortTh(tab,col,label){
   const op=active?1:0.3;
   return '<th style="cursor:pointer;user-select:none;" onclick="_setSort(\''+tab+'\',\''+col+'\')">'+label+' <span style="font-size:.65rem;opacity:'+op+';">'+arrow+'</span></th>';
 }
-function _notesCell(notes){
-  if(!notes||notes==='—') return '<td style="color:#9a9080;font-size:.78rem;">—</td>';
-  const short=notes.length>22?notes.substring(0,22)+'…':notes;
-  const escaped=notes.replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  return '<td style="color:#9a9080;font-size:.78rem;max-width:120px;"><span title="'+escaped+'" style="cursor:help;border-bottom:1px dotted #bfb8a8;">'+short+'</span></td>';
+function _notesCell(notes, type, id){
+  const isEmpty = !notes||notes==='—';
+  const short = isEmpty ? '—' : (notes.length>22?notes.substring(0,22)+'…':notes);
+  const onclick = (type&&id!=null) ? `event.stopPropagation();openNotesModal('${type}',${id})` : '';
+  const style = onclick ? 'cursor:pointer;border-bottom:1px dotted #bfb8a8;color:'+(isEmpty?'#9a9080':'var(--ink)')+';' : 'color:#9a9080;';
+  return `<td style="font-size:.78rem;max-width:120px;" onclick="${onclick}"><span style="${style}">${isEmpty?'—':short}</span></td>`;
+}
+
+function openNotesModal(type, id){
+  let item, field;
+  if(type==='pay')  { item=pending.find(i=>i.id===id); field='notes'; }
+  else if(type==='paid') { item=paid.find(i=>i.id===id); field='notes'; }
+  else if(type==='shop') { item=shops.find(i=>i.id===id); field='notes'; }
+  else if(type==='todo') { item=todos.find(i=>i.id===id); field='info'; }
+  else if(type==='done') { item=todos.find(i=>i.id===id); field='info'; }
+  if(!item) return;
+  const notes = item[field]||'';
+  const overlay = document.getElementById('notes-modal-overlay');
+  const body = document.getElementById('notes-modal-body');
+  if(!overlay||!body) return;
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3 style="font-family:var(--serif);font-size:1rem;color:var(--ink);">📝 Σημειώσεις</h3>
+      <button onclick="closeNotesModal()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#9a9080;padding:0 4px;">✕</button>
+    </div>
+    <div style="font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:#9a9080;margin-bottom:4px;">${esc(item.desc||item.name||'')}</div>
+    <textarea id="notes-modal-ta" style="width:100%;min-height:120px;border:1.5px solid var(--border);background:var(--paper);padding:10px 12px;font-family:var(--mono);font-size:.85rem;color:var(--ink);border-radius:4px;outline:none;resize:vertical;line-height:1.5;">${esc(notes)}</textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn btn-ghost" onclick="closeNotesModal()">Κλείσιμο</button>
+      <button class="btn btn-primary" onclick="saveNotesModal('${type}',${id},'${field}')">💾 Αποθήκευση</button>
+    </div>`;
+  overlay.classList.add('open');
+  setTimeout(()=>document.getElementById('notes-modal-ta')?.focus(),50);
+}
+
+function saveNotesModal(type, id, field){
+  const val = document.getElementById('notes-modal-ta')?.value||'';
+  let item;
+  if(type==='pay')  item=pending.find(i=>i.id===id);
+  else if(type==='paid') item=paid.find(i=>i.id===id);
+  else if(type==='shop') item=shops.find(i=>i.id===id);
+  else if(type==='todo'||type==='done') item=todos.find(i=>i.id===id);
+  if(!item) return;
+  item[field]=val;
+  saveState();render();
+  closeNotesModal();
+  toast('Σημειώσεις αποθηκεύτηκαν ✓','green');
+}
+
+function closeNotesModal(){
+  document.getElementById('notes-modal-overlay')?.classList.remove('open');
 }
 function fmt(n){return new Intl.NumberFormat('el-GR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -2068,7 +2114,7 @@ function render(){
         <td>${duePill(displayDate)}</td>
         <td class="category"><span>${esc(item.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(item.method||'—')}</td>
-        ${_notesCell(item.notes)}
+        ${_notesCell(item.notes,'pay',item.id)}
         <td onclick="event.stopPropagation()"><div class="action-cell">
           <button class="action-btn pay-btn" onclick="markPaid(${item.id})">✅</button>
           <button class="action-btn" style="width:auto;padding:6px 8px;background:#0369a1;color:white;border:none;border-radius:3px;cursor:pointer;" onclick="setEntryReminder('pay',${item.id},'${item.due||''}','${esc(item.desc).replace(/'/g,'')}')">🔔</button>
@@ -2142,7 +2188,7 @@ function render(){
         <td>${duePill(item.due)}</td>
         <td class="category"><span>${esc(item.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(item.method||'—')}</td>
-        ${_notesCell(item.notes)}
+        ${_notesCell(item.notes,'paid',item.id)}
         <td class="paid-date">✓ ${new Date(item.paidAt).toLocaleDateString('el-GR')}</td>
         <td onclick="event.stopPropagation()"><div class="action-cell">
           ${item.shopRef!=null
@@ -2266,7 +2312,7 @@ function render(){
         <td>${_dispDateStr}</td>
         <td class="category"><span>${esc(s.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(s.method||'—')}</td>
-        ${_notesCell(s.notes)}
+        ${_notesCell(s.notes,'shop',s.id)}
         <td onclick="event.stopPropagation()"><div class="action-cell">
           <button class="action-btn pay-btn" onclick="markShopCollected(${s.id})">💰</button>
           <button class="action-btn" style="width:auto;padding:6px 8px;background:#0369a1;color:white;border:none;border-radius:3px;cursor:pointer;" onclick="setEntryReminder('shop',${s.id},'${s.date||''}','${esc(s.desc).replace(/'/g,'')}')">🔔</button>
@@ -2738,7 +2784,7 @@ function render(){
         <td>${t.recurId?(allDoneToday?displayLblT:(overdue?'⚠ ':'')+dateLbl+(t.date?daysLabel(t.date):'')):(duePill(t.date))}</td>
         <td class="category"><span>${esc(t.cat||'—')}</span></td>
         <td style="color:#9a9080;font-size:.78rem">${esc(t.ttype||'—')}</td>
-        ${_notesCell(t.info)}
+        ${_notesCell(t.info,'todo',t.id)}
         <td onclick="event.stopPropagation()"><div class="action-cell">
           <button class="action-btn done-btn" onclick="toggleTodo(${t.id})">✔</button>
           <button class="action-btn" style="width:auto;padding:6px 8px;background:#0369a1;color:white;border:none;border-radius:3px;cursor:pointer;" onclick="setEntryReminder('todo',${t.id},'${t.date||''}','${esc(t.name).replace(/'/g,'')}')">🔔</button>
@@ -2807,7 +2853,7 @@ function render(){
           <td>${dateLbl}</td>
           <td class="category"><span>${esc(t.cat||'—')}</span></td>
           <td style="color:#9a9080;font-size:.78rem">${esc(t.ttype||'—')}</td>
-          <td style="color:#9a9080;font-size:.78rem">${esc(t.info||'—')}</td>
+          ${t.type==='todo'?_notesCell(t.info,'done',t.id):`<td style="color:#9a9080;font-size:.78rem">${esc(t.info||'—')}</td>`}
           <td class="paid-date">✓ ${doneLbl}</td>
           <td onclick="event.stopPropagation()">${undoBtn}</td>
           <td onclick="event.stopPropagation()">${delBtn}</td>
@@ -5602,6 +5648,11 @@ function addCollDirect(){
 }
 
 </script>
+
+<!-- Notes Edit Modal -->
+<div class="edit-modal-overlay" id="notes-modal-overlay" onclick="if(event.target===this)closeNotesModal()">
+  <div class="edit-modal" id="notes-modal-body"></div>
+</div>
 
 <!-- Recur Setup Modal -->
 <div class="edit-modal-overlay" id="recur-setup-overlay" onclick="if(event.target===this)closeRecurSetup()">
